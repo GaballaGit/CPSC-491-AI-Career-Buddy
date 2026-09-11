@@ -1,11 +1,8 @@
 name: Frontend CI
 
 on:
-  push:
-    paths:
-      - "site/career-buddy-site/**"
-      - ".github/workflows/frontend-ci.yml"
   pull_request:
+    branches: ["main"]
     paths:
       - "site/career-buddy-site/**"
       - ".github/workflows/frontend-ci.yml"
