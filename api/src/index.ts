@@ -1,13 +1,18 @@
-import express, { type Request, type Response } from 'express';
+import express, { type Request, type Response } from "express";
 
 const app = express();
+const port = process.env.PORT ?? 8000;
+
 app.use(express.json());
 
-// Health check route with defined types
-app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'API is running successfully!' });
+app.get("/", (_req: Request, res: Response) => {
+  res.send("Hello, TypeScript + Express!");
 });
 
-app.listen(3000, () => {
-  console.log('Server running on port 3000');
+app.get("/health", (_req: Request, res: Response) => {
+  res.status(200).json({ status: "ok" });
+});
+
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });
