@@ -1,9 +1,4 @@
 /**
- * CareerLM Shared Types
- * Defined according to CONVENTIONS.md
- */
-
-/**
  * Standard Authenticated User context extracted from JWT Bearer token
  */
 export interface AuthUser {
