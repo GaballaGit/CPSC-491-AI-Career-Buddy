@@ -1,157 +1,268 @@
 /**
  * Project Repository: User-Scoped Persistence Layer
- * Guarantees multi-tenant isolation so users can only ever access their own projects.
- * Follows conventions defined in CONVENTIONS.md
+ *
+ * Persists portfolio projects in Supabase/PostgreSQL.
+ * Every operation is explicitly scoped to the authenticated user ID.
  */
-import { randomUUID } from 'node:crypto';
-import type { CreateProjectDto, Project, ProjectSummary, UpdateProjectDto } from '../entities/project.js';
+
+import type {
+  CreateProjectDto,
+  Project,
+  ProjectSummary,
+  UpdateProjectDto,
+} from '../entities/project.js';
+
+import { getDatabaseClient } from './client.js';
 
 export interface IProjectRepository {
   create(userId: string, dto: CreateProjectDto): Promise<Project>;
+
   findByUser(userId: string): Promise<Project[]>;
+
   findById(userId: string, id: string): Promise<Project | null>;
-  update(userId: string, id: string, dto: UpdateProjectDto): Promise<Project | null>;
+
+  update(
+    userId: string,
+    id: string,
+    dto: UpdateProjectDto,
+  ): Promise<Project | null>;
+
   delete(userId: string, id: string): Promise<boolean>;
+
   getSummaryByUser(userId: string): Promise<ProjectSummary[]>;
-  countByUser(userId: string): Promise<{ total: number; completed: number; in_progress: number }>;
-  clear(): void; // Used for automated testing
+
+  countByUser(
+    userId: string,
+  ): Promise<{
+    total: number;
+    completed: number;
+    in_progress: number;
+  }>;
 }
 
-/**
- * In-memory / durable project store supporting complete user scoping and isolation.
- */
 class ProjectRepository implements IProjectRepository {
-  private projects: Map<string, Project> = new Map();
-
   /**
-   * Create a new project strictly bound to the authenticated userId.
+   * Create a project owned by the authenticated user.
    */
-  async create(userId: string, dto: CreateProjectDto): Promise<Project> {
-    const now = new Date().toISOString();
-    const id = randomUUID();
+  async create(
+    userId: string,
+    dto: CreateProjectDto,
+  ): Promise<Project> {
+    const databaseClient = getDatabaseClient();
 
-    const newProject: Project = {
-      id,
-      user_id: userId, // Enforce database-level ownership
-      title: dto.title.trim(),
-      description: dto.description.trim(),
-      skills_demonstrated: [...(dto.skills_demonstrated ?? [])],
-      project_urls: [...(dto.project_urls ?? [])],
-      status: dto.status ?? 'in_progress',
-      created_at: now,
-      updated_at: now,
-    };
+    const { data, error } = await databaseClient
+      .from('projects')
+      .insert({
+        user_id: userId,
+        title: dto.title.trim(),
+        description: dto.description.trim(),
+        skills_demonstrated: dto.skills_demonstrated ?? [],
+        project_urls: dto.project_urls ?? [],
+        status: dto.status ?? 'in_progress',
+      })
+      .select('*')
+      .single();
 
-    this.projects.set(id, newProject);
-    return { ...newProject };
+    if (error) {
+      throw new Error(
+        `Failed to create project: ${error.message}`,
+      );
+    }
+
+    return data as Project;
   }
 
   /**
-   * Retrieve all projects owned by the authenticated user.
+   * Return all projects owned by the authenticated user.
    */
   async findByUser(userId: string): Promise<Project[]> {
-    const results: Project[] = [];
-    for (const project of this.projects.values()) {
-      if (project.user_id === userId) {
-        results.push({ ...project });
-      }
-    }
-    // Sort descending by creation date
-    return results.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }
+    const databaseClient = getDatabaseClient();
 
-  /**
-   * Retrieve a specific project by ID, strictly enforcing ownership.
-   * Returns null if the project does not exist OR belongs to another user.
-   */
-  async findById(userId: string, id: string): Promise<Project | null> {
-    const project = this.projects.get(id);
-    if (!project || project.user_id !== userId) {
-      return null;
-    }
-    return { ...project };
-  }
+    const { data, error } = await databaseClient
+      .from('projects')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', {
+        ascending: false,
+      });
 
-  /**
-   * Update an existing project only if it belongs to the authenticated user.
-   */
-  async update(userId: string, id: string, dto: UpdateProjectDto): Promise<Project | null> {
-    const existing = this.projects.get(id);
-    if (!existing || existing.user_id !== userId) {
-      return null; // Not found or not owned
+    if (error) {
+      throw new Error(
+        `Failed to retrieve projects: ${error.message}`,
+      );
     }
 
-    const updated: Project = {
-      ...existing,
-      title: dto.title !== undefined ? dto.title.trim() : existing.title,
-      description: dto.description !== undefined ? dto.description.trim() : existing.description,
-      skills_demonstrated: dto.skills_demonstrated !== undefined ? [...dto.skills_demonstrated] : existing.skills_demonstrated,
-      project_urls: dto.project_urls !== undefined ? [...dto.project_urls] : existing.project_urls,
-      status: dto.status !== undefined ? dto.status : existing.status,
-      updated_at: new Date().toISOString(),
-    };
-
-    this.projects.set(id, updated);
-    return { ...updated };
+    return (data ?? []) as Project[];
   }
 
   /**
-   * Delete a project only if it belongs to the authenticated user.
+   * Return one project only when it belongs to the authenticated user.
+   *
+   * A project belonging to another user is treated as not found.
    */
-  async delete(userId: string, id: string): Promise<boolean> {
-    const existing = this.projects.get(id);
-    if (!existing || existing.user_id !== userId) {
-      return false; // Not found or not owned
+  async findById(
+    userId: string,
+    id: string,
+  ): Promise<Project | null> {
+    const databaseClient = getDatabaseClient();
+
+    const { data, error } = await databaseClient
+      .from('projects')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(
+        `Failed to retrieve project: ${error.message}`,
+      );
     }
 
-    this.projects.delete(id);
-    return true;
+    return data ? (data as Project) : null;
   }
 
   /**
-   * Retrieve lightweight summaries for dashboard display.
+   * Update a project only when it belongs to the authenticated user.
    */
-  async getSummaryByUser(userId: string): Promise<ProjectSummary[]> {
-    const userProjects = await this.findByUser(userId);
-    return userProjects.map((p) => ({
-      id: p.id,
-      title: p.title,
-      skills_demonstrated: p.skills_demonstrated,
-      status: p.status,
-      updated_at: p.updated_at,
-    }));
+  async update(
+    userId: string,
+    id: string,
+    dto: UpdateProjectDto,
+  ): Promise<Project | null> {
+    const databaseClient = getDatabaseClient();
+
+    const updates: Partial<{
+      title: string;
+      description: string;
+      skills_demonstrated: string[];
+      project_urls: string[];
+      status: string;
+    }> = {};
+
+    if (dto.title !== undefined) {
+      updates.title = dto.title.trim();
+    }
+
+    if (dto.description !== undefined) {
+      updates.description = dto.description.trim();
+    }
+
+    if (dto.skills_demonstrated !== undefined) {
+      updates.skills_demonstrated = dto.skills_demonstrated;
+    }
+
+    if (dto.project_urls !== undefined) {
+      updates.project_urls = dto.project_urls;
+    }
+
+    if (dto.status !== undefined) {
+      updates.status = dto.status;
+    }
+
+    const { data, error } = await databaseClient
+      .from('projects')
+      .update(updates)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select('*')
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(
+        `Failed to update project: ${error.message}`,
+      );
+    }
+
+    return data ? (data as Project) : null;
   }
 
   /**
-   * Retrieve project counts for dashboard / readiness score calculation.
+   * Delete a project only when it belongs to the authenticated user.
    */
-  async countByUser(userId: string): Promise<{ total: number; completed: number; in_progress: number }> {
-    const userProjects = await this.findByUser(userId);
+  async delete(
+    userId: string,
+    id: string,
+  ): Promise<boolean> {
+    const databaseClient = getDatabaseClient();
+
+    const { data, error } = await databaseClient
+      .from('projects')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select('id')
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(
+        `Failed to delete project: ${error.message}`,
+      );
+    }
+
+    return data !== null;
+  }
+
+  /**
+   * Return lightweight project information for dashboard use.
+   */
+  async getSummaryByUser(
+    userId: string,
+  ): Promise<ProjectSummary[]> {
+    const databaseClient = getDatabaseClient();
+
+    const { data, error } = await databaseClient
+      .from('projects')
+      .select(
+        'id, title, skills_demonstrated, status, updated_at',
+      )
+      .eq('user_id', userId)
+      .order('updated_at', {
+        ascending: false,
+      });
+
+    if (error) {
+      throw new Error(
+        `Failed to retrieve project summaries: ${error.message}`,
+      );
+    }
+
+    return (data ?? []) as ProjectSummary[];
+  }
+
+  /**
+   * Return project counts for the authenticated user.
+   */
+  async countByUser(
+    userId: string,
+  ): Promise<{
+    total: number;
+    completed: number;
+    in_progress: number;
+  }> {
+    /*
+     * No getDatabaseClient() is needed here because
+     * findByUser() already obtains the database client.
+     */
+    const projects = await this.findByUser(userId);
+
     let completed = 0;
-    let in_progress = 0;
+    let inProgress = 0;
 
-    for (const project of userProjects) {
+    for (const project of projects) {
       if (project.status === 'completed') {
-        completed++;
-      } else {
-        in_progress++;
+        completed += 1;
+      } else if (project.status === 'in_progress') {
+        inProgress += 1;
       }
     }
 
     return {
-      total: userProjects.length,
+      total: projects.length,
       completed,
-      in_progress,
+      in_progress: inProgress,
     };
-  }
-
-  /**
-   * Clear all records (useful for test resets).
-   */
-  clear(): void {
-    this.projects.clear();
   }
 }
 
-// Export singleton instance
 export const projectRepository = new ProjectRepository();
