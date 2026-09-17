@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS jobs (
 -- One row per required skill keeps skills queryable for future matching.
 CREATE TABLE IF NOT EXISTS job_required_skills (
     job_id UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
-    skill VARCHAR(100) NOT NULL CHECK (char_length(skill) BETWEEN 1 AND 100),
+    skill VARCHAR(100) NOT NULL CHECK (skill = lower(trim(skill))) CHECK (char_length(skill) BETWEEN 1 AND 100),
     PRIMARY KEY (job_id, skill)
 );
 

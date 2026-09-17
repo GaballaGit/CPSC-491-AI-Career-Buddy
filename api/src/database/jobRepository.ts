@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
-import type { CreateJobDto, Job } from "../entities/job.js";
+import type { CreateJobDto, Job, RequiredSkill } from "../entities/job.js";
+
+export function normalizeSkill(skill: RequiredSkill): RequiredSkill {
+  return { name: skill.name.trim().toLowerCase() };
+}
 
 class JobRepository {
   private readonly jobs = new Map<string, Job>();
@@ -11,7 +15,13 @@ class JobRepository {
 
   create(input: CreateJobDto): Job {
     const now = new Date().toISOString();
-    const job: Job = { id: randomUUID(), ...input, created_at: now, updated_at: now };
+    const job: Job = {
+      id: randomUUID(),
+      ...input,
+      required_skills: input.required_skills.map(normalizeSkill),
+      created_at: now,
+      updated_at: now,
+    };
     this.jobs.set(job.id, job);
     return job;
   }
@@ -22,6 +32,13 @@ class JobRepository {
 
   findById(id: string): Job | undefined {
     return this.jobs.get(id);
+  }
+
+  findByRequiredSkill(skill: string): Job[] {
+    const normalized = skill.trim().toLowerCase();
+    return this.findAll().filter((job) =>
+      job.required_skills.some((required) => required.name === normalized),
+    );
   }
 }
 
