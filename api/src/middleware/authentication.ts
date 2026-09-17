@@ -3,6 +3,7 @@
  * Follows conventions defined in CONVENTIONS.md
  */
 import type { RequestHandler } from 'express';
+
 import { AuthenticationError } from '../errors/index.js';
 import type { AuthUser } from '../shared.js';
 import { verifyToken } from '../utils/authToken.js';
@@ -10,11 +11,9 @@ import { verifyToken } from '../utils/authToken.js';
 /**
  * Augment Express Request interface with the authenticated user context
  */
-declare global {
-  namespace Express {
-    interface Request {
-      user?: AuthUser;
-    }
+declare module 'express-serve-static-core' {
+  interface Request {
+    user?: AuthUser;
   }
 }
 
@@ -25,17 +24,29 @@ export const requireAuthentication: RequestHandler = (req, _res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
-    return next(new AuthenticationError('Missing Authorization header. Expected Bearer token.'));
+    return next(
+      new AuthenticationError(
+        'Missing Authorization header. Expected Bearer token.',
+      ),
+    );
   }
 
   const [scheme, token] = authHeader.split(' ');
+
   if (scheme !== 'Bearer' || !token) {
-    return next(new AuthenticationError('Invalid Authorization format. Expected: Bearer <token>.'));
+    return next(
+      new AuthenticationError(
+        'Invalid Authorization format. Expected: Bearer <token>.',
+      ),
+    );
   }
 
   const user = verifyToken(token);
+
   if (!user) {
-    return next(new AuthenticationError('Invalid or expired authentication token.'));
+    return next(
+      new AuthenticationError('Invalid or expired authentication token.'),
+    );
   }
 
   // Attach verified user context to request
