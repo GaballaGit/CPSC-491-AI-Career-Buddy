@@ -3,17 +3,28 @@
  * Guarantees multi-tenant isolation so users can only ever access their own projects.
  * Follows conventions defined in CONVENTIONS.md
  */
-import { randomUUID } from 'node:crypto';
-import type { CreateProjectDto, Project, ProjectSummary, UpdateProjectDto } from '../entities/project.js';
+import { randomUUID } from "node:crypto";
+import type {
+  CreateProjectDto,
+  Project,
+  ProjectSummary,
+  UpdateProjectDto,
+} from "../entities/project.js";
 
 export interface IProjectRepository {
   create(userId: string, dto: CreateProjectDto): Promise<Project>;
   findByUser(userId: string): Promise<Project[]>;
   findById(userId: string, id: string): Promise<Project | null>;
-  update(userId: string, id: string, dto: UpdateProjectDto): Promise<Project | null>;
+  update(
+    userId: string,
+    id: string,
+    dto: UpdateProjectDto,
+  ): Promise<Project | null>;
   delete(userId: string, id: string): Promise<boolean>;
   getSummaryByUser(userId: string): Promise<ProjectSummary[]>;
-  countByUser(userId: string): Promise<{ total: number; completed: number; in_progress: number }>;
+  countByUser(
+    userId: string,
+  ): Promise<{ total: number; completed: number; in_progress: number }>;
   clear(): void; // Used for automated testing
 }
 
@@ -37,7 +48,7 @@ class ProjectRepository implements IProjectRepository {
       description: dto.description.trim(),
       skills_demonstrated: [...(dto.skills_demonstrated ?? [])],
       project_urls: [...(dto.project_urls ?? [])],
-      status: dto.status ?? 'in_progress',
+      status: dto.status ?? "in_progress",
       created_at: now,
       updated_at: now,
     };
@@ -57,7 +68,10 @@ class ProjectRepository implements IProjectRepository {
       }
     }
     // Sort descending by creation date
-    return results.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return results.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
   }
 
   /**
@@ -75,7 +89,11 @@ class ProjectRepository implements IProjectRepository {
   /**
    * Update an existing project only if it belongs to the authenticated user.
    */
-  async update(userId: string, id: string, dto: UpdateProjectDto): Promise<Project | null> {
+  async update(
+    userId: string,
+    id: string,
+    dto: UpdateProjectDto,
+  ): Promise<Project | null> {
     const existing = this.projects.get(id);
     if (!existing || existing.user_id !== userId) {
       return null; // Not found or not owned
@@ -84,9 +102,18 @@ class ProjectRepository implements IProjectRepository {
     const updated: Project = {
       ...existing,
       title: dto.title !== undefined ? dto.title.trim() : existing.title,
-      description: dto.description !== undefined ? dto.description.trim() : existing.description,
-      skills_demonstrated: dto.skills_demonstrated !== undefined ? [...dto.skills_demonstrated] : existing.skills_demonstrated,
-      project_urls: dto.project_urls !== undefined ? [...dto.project_urls] : existing.project_urls,
+      description:
+        dto.description !== undefined
+          ? dto.description.trim()
+          : existing.description,
+      skills_demonstrated:
+        dto.skills_demonstrated !== undefined
+          ? [...dto.skills_demonstrated]
+          : existing.skills_demonstrated,
+      project_urls:
+        dto.project_urls !== undefined
+          ? [...dto.project_urls]
+          : existing.project_urls,
       status: dto.status !== undefined ? dto.status : existing.status,
       updated_at: new Date().toISOString(),
     };
@@ -125,13 +152,15 @@ class ProjectRepository implements IProjectRepository {
   /**
    * Retrieve project counts for dashboard / readiness score calculation.
    */
-  async countByUser(userId: string): Promise<{ total: number; completed: number; in_progress: number }> {
+  async countByUser(
+    userId: string,
+  ): Promise<{ total: number; completed: number; in_progress: number }> {
     const userProjects = await this.findByUser(userId);
     let completed = 0;
     let in_progress = 0;
 
     for (const project of userProjects) {
-      if (project.status === 'completed') {
+      if (project.status === "completed") {
         completed++;
       } else {
         in_progress++;

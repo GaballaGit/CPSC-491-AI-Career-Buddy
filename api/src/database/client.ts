@@ -2,5 +2,5 @@
 
 export function createDatabaseClient(): never {
   // TODO: configure the database connection and pooling.
-  throw new Error('Database client is not implemented');
+  throw new Error("Database client is not implemented");
 }

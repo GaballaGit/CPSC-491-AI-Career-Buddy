@@ -4,7 +4,7 @@
  * Follows conventions defined in CONVENTIONS.md
  */
 
-export type ProjectStatus = 'in_progress' | 'completed';
+export type ProjectStatus = "in_progress" | "completed";
 
 /**
  * Core Project Domain Entity representing a user-submitted portfolio item
