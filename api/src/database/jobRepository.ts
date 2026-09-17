@@ -40,6 +40,11 @@ class JobRepository {
       job.required_skills.some((required) => required.name === normalized),
     );
   }
+
+  findByCategory(category: string): Job[] {
+    const normalized = category.trim().toLowerCase();
+    return this.findAll().filter((job) => job.category.toLowerCase() === normalized);
+  }
 }
 
 export const jobRepository = new JobRepository();

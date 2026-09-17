@@ -12,6 +12,8 @@ a { color: inherit; text-decoration: none; }
 .eyebrow { color: var(--accent); font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
 .section-heading { margin-bottom: 20px; }
 .section-heading h2 { font-size: 2rem; letter-spacing: -.04em; margin: 8px 0 0; }
+.filter-label { color: var(--muted); display: block; font-size: .85rem; font-weight: 700; margin: 24px 0 8px; }
+.category-filter { background: var(--card); border: 1px solid var(--line); border-radius: 10px; color: var(--foreground); font: inherit; margin-bottom: 24px; padding: 10px 12px; }
 .job-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); }
 .job-card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; display: flex; flex-direction: column; min-height: 270px; padding: 24px; transition: border-color .2s, transform .2s; }
 .job-card:hover { border-color: var(--accent); transform: translateY(-3px); }

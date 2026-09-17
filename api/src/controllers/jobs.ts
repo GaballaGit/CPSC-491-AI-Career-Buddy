@@ -11,7 +11,12 @@ export const listJobs: RequestHandler = (req, res) => {
   }
 
   const skill = typeof req.query.skill === "string" ? req.query.skill : undefined;
-  const jobs = skill ? jobRepository.findByRequiredSkill(skill) : jobRepository.findAll();
+  const category = typeof req.query.category === "string" ? req.query.category : undefined;
+  const jobs = category
+    ? jobRepository.findByCategory(category)
+    : skill
+      ? jobRepository.findByRequiredSkill(skill)
+      : jobRepository.findAll();
   const start = (page - 1) * limit;
 
   res.json({
