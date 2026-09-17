@@ -10,12 +10,16 @@ export class NotImplementedError extends Error {
 
 // Resume Extraction - Typed failure with a machine-readable code
 export class ResumeExtractionError extends Error {
-  public readonly code = 'RESUME_EXTRACTION_FAILED';
+  public readonly code: ApiErrorCode;
   public readonly statusCode = 422;
 
-  constructor(message = 'Resume extraction failed') {
+  constructor(
+    code: ApiErrorCode = 'RESUME_EXTRACTION_FAILED',
+    message = 'Resume extraction failed',
+  ) {
     super(message);
     this.name = 'ResumeExtractionError';
+    this.code = code;
   }
 }
 

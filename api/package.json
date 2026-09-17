@@ -20,11 +20,13 @@
   "dependencies": {
     "express": "^5.2.1",
     "mammoth": "^1.12.2",
+    "multer": "^2.4.0",
     "unpdf": "^1.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/express": "^5.0.6",
+    "@types/multer": "^2.2.0",
     "@types/node": "^22.20.2",
     "eslint": "^10.10.0",
     "globals": "^17.12.0",

@@ -34,7 +34,10 @@ export async function extractResumeText(
 
     // Rejected - Unsupported extension
   } else {
-    throw new ResumeExtractionError(`Unsupported file type: .${ext}`);
+    throw new ResumeExtractionError(
+      'UNSUPPORTED_FILE_TYPE',
+      `Unsupported file type: .${ext}`,
+    );
   }
 
   const text = normalize(raw);
@@ -42,6 +45,7 @@ export async function extractResumeText(
   // Empty Result - Likely a scanned image
   if (!text) {
     throw new ResumeExtractionError(
+      'NO_TEXT_FOUND',
       'No readable text found. The file may be a scanned image.',
     );
   }

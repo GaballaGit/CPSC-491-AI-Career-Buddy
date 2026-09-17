@@ -16,6 +16,8 @@ export type ApiErrorCode =
   | 'CONFLICT'
   | 'UNPROCESSABLE_ENTITY'
   | 'RESUME_EXTRACTION_FAILED'
+  | 'UNSUPPORTED_FILE_TYPE'
+  | 'NO_TEXT_FOUND'
   | 'INTERNAL_SERVER_ERROR';
 
 export interface ApiErrorPayload {
