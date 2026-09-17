@@ -48,6 +48,8 @@ export async function runMigrations(): Promise<string[]> {
   return migrations.map((m) => m.name);
 }
 
-export async function seedDatabase(): Promise<void> {
-  // Seed repeatable sample data for local development when DB is connected.
+export async function seedDatabase(): Promise<never> {
+  // TODO: seed repeatable sample jobs for local development.
+  throw new Error('Database seeding is not implemented');
 }
+
