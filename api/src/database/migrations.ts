@@ -20,6 +20,7 @@ export interface MigrationFile {
  */
 export const registeredMigrations: string[] = [
   '001_create_projects.sql',
+  '002_create_career_profiles.sql',
 ];
 
 /**

@@ -7,3 +7,11 @@ export type {
   UpdateProjectDto,
   ProjectSummary,
 } from './project.js';
+
+export type {
+  CareerProfile,
+  ExperienceLevel,
+  LearningPreference,
+  CreateCareerProfileDto,
+  UpdateCareerProfileDto,
+} from './careerProfile.js';
