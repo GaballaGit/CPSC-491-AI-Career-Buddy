@@ -4,6 +4,7 @@ import { ExpressAuth } from "@auth/express";
 import { authConfig } from "./auth/config.js";
 import { errorHandler } from "./middleware/errors.js";
 import { router } from "./routes.js";
+import { seedDatabase } from "./database/migrations.js";
 
 const app = express();
 const port = process.env.PORT ?? 8000;
@@ -22,6 +23,8 @@ app.get("/health", (_req: Request, res: Response) => {
 app.use("/api", router);
 app.use("/api/auth", ExpressAuth(authConfig));
 app.use(errorHandler);
+
+await seedDatabase();
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
