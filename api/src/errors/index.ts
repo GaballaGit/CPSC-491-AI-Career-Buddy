@@ -14,13 +14,41 @@ export class ResumeExtractionError extends Error {
   public readonly statusCode = 422;
   public readonly code: ApiErrorCode;
 
+  constructor(message?: string);
+  constructor(code: ApiErrorCode, message?: string);
   constructor(
-    code: ApiErrorCode = 'RESUME_EXTRACTION_FAILED',
-    message = 'Resume extraction failed',
+    codeOrMessage: ApiErrorCode | string = 'RESUME_EXTRACTION_FAILED',
+    message?: string,
   ) {
-    super(message);
+    const knownCodes: ApiErrorCode[] = [
+      'INVALID_REQUEST',
+      'VALIDATION_ERROR',
+      'AUTHENTICATION_REQUIRED',
+      'PERMISSION_DENIED',
+      'RESOURCE_NOT_FOUND',
+      'CONFLICT',
+      'UNPROCESSABLE_ENTITY',
+      'RESUME_EXTRACTION_FAILED',
+      'UNSUPPORTED_FILE_TYPE',
+      'NO_TEXT_FOUND',
+      'INTERNAL_SERVER_ERROR',
+    ];
+
+    const isCode = knownCodes.includes(
+      codeOrMessage as ApiErrorCode,
+    );
+
+    super(
+      isCode
+        ? (message ?? 'Resume extraction failed')
+        : codeOrMessage,
+    );
+
     this.name = 'ResumeExtractionError';
-    this.code = code;
+
+    this.code = isCode
+      ? (codeOrMessage as ApiErrorCode)
+      : 'RESUME_EXTRACTION_FAILED';
   }
 }
 
