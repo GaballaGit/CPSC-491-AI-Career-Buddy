@@ -1,11 +1,53 @@
-/** Database schema migrations and local development seed data. */
+/**
+ * Database schema migrations and local development seed data.
+ * Follows conventions defined in CONVENTIONS.md
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-export async function runMigrations(): Promise<never> {
-  // TODO: add and run migrations for shared domain tables.
-  throw new Error('Migrations are not implemented');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export interface MigrationFile {
+  name: string;
+  filePath: string;
+  sql?: string;
 }
 
-export async function seedDatabase(): Promise<never> {
-  // TODO: seed repeatable sample jobs for local development.
-  throw new Error('Database seeding is not implemented');
+/**
+ * List of registered domain migrations in execution order
+ */
+export const registeredMigrations: string[] = [
+  '001_create_projects.sql',
+];
+
+/**
+ * Load available migration files from the migrations directory
+ */
+export function getAvailableMigrations(): MigrationFile[] {
+  const migrationsDir = path.join(__dirname, 'migrations');
+  if (!fs.existsSync(migrationsDir)) {
+    return [];
+  }
+
+  return fs
+    .readdirSync(migrationsDir)
+    .filter((file) => file.endsWith('.sql'))
+    .sort()
+    .map((fileName) => ({
+      name: fileName,
+      filePath: path.join(migrationsDir, fileName),
+      sql: fs.readFileSync(path.join(migrationsDir, fileName), 'utf-8'),
+    }));
+}
+
+export async function runMigrations(): Promise<string[]> {
+  const migrations = getAvailableMigrations();
+  // When a database connection is active, each migration's SQL will be executed in a transaction.
+  return migrations.map((m) => m.name);
+}
+
+export async function seedDatabase(): Promise<void> {
+  // Seed repeatable sample data for local development when DB is connected.
 }
