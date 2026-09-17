@@ -14,7 +14,10 @@ function normalize(text: string): string {
 }
 
 // Main Entry - Resume file to plain text
-export async function extractResumeText(buffer: Buffer, filename: string): Promise<string> {
+export async function extractResumeText(
+  buffer: Buffer,
+  filename: string,
+): Promise<string> {
   const ext = filename.toLowerCase().split('.').pop();
   let raw: string;
 
@@ -31,7 +34,7 @@ export async function extractResumeText(buffer: Buffer, filename: string): Promi
 
     // Rejected - Unsupported extension
   } else {
-    throw new ResumeExtractionError('UNSUPPORTED_FILE_TYPE', `Unsupported file type: .${ext}`);
+    throw new ResumeExtractionError(`Unsupported file type: .${ext}`);
   }
 
   const text = normalize(raw);
@@ -39,7 +42,6 @@ export async function extractResumeText(buffer: Buffer, filename: string): Promi
   // Empty Result - Likely a scanned image
   if (!text) {
     throw new ResumeExtractionError(
-      'NO_TEXT_FOUND',
       'No readable text found. The file may be a scanned image.',
     );
   }
