@@ -13,10 +13,24 @@ interface JobsResponse {
   data: Job[];
 }
 
+interface JobResponse {
+  success: boolean;
+  data: Job;
+}
+
 export async function getJobs(): Promise<Job[]> {
   const response = await fetch("/api/jobs");
   if (!response.ok) throw new Error("Unable to load jobs.");
   const payload = (await response.json()) as JobsResponse;
   if (!payload.success) throw new Error("Unable to load jobs.");
+  return payload.data;
+}
+
+export async function getJob(id: string): Promise<Job> {
+  const response = await fetch(`/api/jobs/${id}`);
+  if (response.status === 404) throw new Error("Job not found.");
+  if (!response.ok) throw new Error("Unable to load job.");
+  const payload = (await response.json()) as JobResponse;
+  if (!payload.success) throw new Error("Unable to load job.");
   return payload.data;
 }
