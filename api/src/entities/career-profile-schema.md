@@ -60,7 +60,31 @@ Every field on this entity maps 1:1 to `OnboardingFormData`
 | `learningPreferences` | `learning_preferences` |
 | `weeklyAvailabilityHours` | `weekly_availability_hours` |
 
-When KAN-4 (save Career Profile data) is implemented, `POST /career-profile` should accept this same shape so the onboarding form's existing payload can be sent with no client-side remapping.
+The API uses the snake_case column names (matching `CreateCareerProfileDto` and the projects API), so the frontend maps its camelCase form fields to them when submitting.
+
+### 3.1 `POST /api/career-profile` (KAN-4)
+
+Requires an authenticated session. Creates the current user's Career Profile, or replaces it if one already exists (one profile per user).
+
+Request body:
+
+```json
+{
+  "target_career": "Frontend Engineer",
+  "experience_level": "intermediate",
+  "skills": ["TypeScript", "React"],
+  "learning_preferences": ["hands_on_projects", "reading"],
+  "weekly_availability_hours": 10
+}
+```
+
+| Status | When | Body |
+| :--- | :--- | :--- |
+| `201` | Saved | `{ success: true, data: CareerProfile, meta: { timestamp } }` |
+| `400` | Invalid payload | `{ success: false, error: { code: "VALIDATION_ERROR", message, details: [{ field, message }] } }` — one `details` entry per invalid field |
+| `401` | Not signed in | `{ success: false, error: { code: "AUTHENTICATION_REQUIRED", message } }` |
+
+Validation mirrors the table constraints: `target_career` 1–100 characters, `experience_level` and each `learning_preferences` item from the allowed values, `skills` and `learning_preferences` non-empty, `weekly_availability_hours` a whole number from 1 to 168.
 
 ---
 

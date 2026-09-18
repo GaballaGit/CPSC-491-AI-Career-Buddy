@@ -2,6 +2,7 @@
 import { Router } from "express";
 
 import { getCurrentUser, signUp } from "./controllers/authentication.js";
+import { createCareerProfile } from "./controllers/careerProfile.js";
 import { getJob, listJobs } from "./controllers/jobs.js";
 import { requireAuthentication } from "./middleware/authentication.js";
 
@@ -11,3 +12,4 @@ router.post("/auth/signup", signUp);
 router.get("/auth/me", requireAuthentication, getCurrentUser);
 router.get("/jobs", listJobs);
 router.get("/jobs/:id", getJob);
+router.post("/career-profile", requireAuthentication, createCareerProfile);
