@@ -88,6 +88,34 @@ Request body:
 
 Validation mirrors the table constraints: `target_career` 1–100 characters, `experience_level` and each `learning_preferences` item from the allowed values, `skills` and `learning_preferences` non-empty, `weekly_availability_hours` a whole number from 1 to 168.
 
+### 3.2 `GET /api/career-profile` (KAN-5)
+
+Requires an authenticated session. Returns the current user's Career Profile. Other subsystems (Resume, Job, Portfolio, Roadmap) should read the profile through this endpoint rather than querying `career_profiles` directly.
+
+| Status | When           | Body                                                                      |
+| :----- | :------------- | :------------------------------------------------------------------------ |
+| `200`  | Profile exists | `{ success: true, data: CareerProfile, meta: { timestamp } }`             |
+| `200`  | No profile yet | `{ success: true, data: null, meta: { timestamp } }`                      |
+| `401`  | Not signed in  | `{ success: false, error: { code: "AUTHENTICATION_REQUIRED", message } }` |
+
+Having no profile yet is a normal state for a new user, not an error, so it returns `200` with `data: null` instead of `404`. Check `data === null` to send the user to onboarding.
+
+Example `data` when a profile exists:
+
+```json
+{
+  "id": "5f1c…",
+  "user_id": "9a2e…",
+  "target_career": "Frontend Engineer",
+  "experience_level": "intermediate",
+  "skills": ["TypeScript", "React"],
+  "learning_preferences": ["hands_on_projects", "reading"],
+  "weekly_availability_hours": 10,
+  "created_at": "2026-09-18T02:00:00.000Z",
+  "updated_at": "2026-09-18T02:00:00.000Z"
+}
+```
+
 ---
 
 ## 4. TypeScript Contracts
