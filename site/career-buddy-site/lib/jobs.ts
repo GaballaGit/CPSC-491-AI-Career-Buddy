@@ -18,8 +18,9 @@ interface JobResponse {
   data: Job;
 }
 
-export async function getJobs(): Promise<Job[]> {
-  const response = await fetch("/api/jobs");
+export async function getJobs(category?: string): Promise<Job[]> {
+  const query = category ? `?category=${encodeURIComponent(category)}` : "";
+  const response = await fetch(`/api/jobs${query}`);
   if (!response.ok) throw new Error("Unable to load jobs.");
   const payload = (await response.json()) as JobsResponse;
   if (!payload.success) throw new Error("Unable to load jobs.");
