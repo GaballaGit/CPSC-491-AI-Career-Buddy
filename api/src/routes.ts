@@ -24,17 +24,9 @@ router.get("/auth/me", requireAuthentication, getCurrentUser);
 router.get("/jobs", listJobs);
 router.get("/jobs/:id", getJob);
 
-router.post(
-  "/career-profile",
-  requireAuthentication,
-  createCareerProfile,
-);
+router.post("/career-profile", requireAuthentication, createCareerProfile);
 
-router.get(
-  "/career-profile",
-  requireAuthentication,
-  getCareerProfile,
-);
+router.get("/career-profile", requireAuthentication, getCareerProfile);
 
 router.post("/projects", requireAuthentication, createProject);
 router.get("/projects", requireAuthentication, getProjects);
