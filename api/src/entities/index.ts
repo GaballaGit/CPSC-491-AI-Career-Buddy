@@ -9,3 +9,11 @@ export type {
 } from "./project.js";
 
 export type { Job, RequiredSkill, CreateJobDto, UpdateJobDto } from "./job.js";
+
+export type {
+  CareerProfile,
+  ExperienceLevel,
+  LearningPreference,
+  CreateCareerProfileDto,
+  UpdateCareerProfileDto,
+} from "./careerProfile.js";
