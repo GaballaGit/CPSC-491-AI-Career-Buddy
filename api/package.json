@@ -11,7 +11,8 @@
     "start:prod": "npm run build && npm run start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write \"**/*.{ts,js,json,md,yml,yaml}\""
+    "format": "prettier --write \"**/*.{ts,js,json,md,yml,yaml}\"",
+    "db:check": "tsx src/database/checkConnection.ts"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +21,8 @@
   "dependencies": {
     "@auth/core": "^0.41.3",
     "@auth/express": "^0.12.3",
+    "@supabase/supabase-js": "^2.116.0",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "mammoth": "^1.12.2",
     "unpdf": "^1.8.1",
