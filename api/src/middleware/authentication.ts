@@ -1,55 +1,36 @@
-/**
- * Identifies the current user and protects routes that require authentication.
- * Follows conventions defined in CONVENTIONS.md
- */
-import type { RequestHandler } from 'express';
+/** Loads the Auth.js session and protects routes that require authentication. */
+import type { RequestHandler } from "express";
+import { getSession } from "@auth/express";
 
-import { AuthenticationError } from '../errors/index.js';
-import type { AuthUser } from '../shared.js';
-import { verifyToken } from '../utils/authToken.js';
+import { authConfig } from "../auth/config.js";
+import { AuthenticationError } from "../errors/index.js";
+import type { AuthUser } from "../shared.js";
 
-/**
- * Augment Express Request interface with the authenticated user context
- */
-declare module 'express-serve-static-core' {
+declare module "express-serve-static-core" {
   interface Request {
     user?: AuthUser;
   }
 }
 
-/**
- * Authentication middleware that enforces a valid Bearer token and injects req.user.
- */
-export const requireAuthentication: RequestHandler = (req, _res, next) => {
-  const authHeader = req.headers.authorization;
+export const requireAuthentication: RequestHandler = async (
+  req,
+  _res,
+  next,
+) => {
+  try {
+    const session = await getSession(req, authConfig);
+    const user = session?.user;
+    if (!user?.id || !user.email) {
+      return next(new AuthenticationError());
+    }
 
-  if (!authHeader) {
-    return next(
-      new AuthenticationError(
-        'Missing Authorization header. Expected Bearer token.',
-      ),
-    );
+    req.user = {
+      id: user.id,
+      email: user.email,
+      ...(user.name ? { name: user.name } : {}),
+    };
+    next();
+  } catch (error) {
+    next(error);
   }
-
-  const [scheme, token] = authHeader.split(' ');
-
-  if (scheme !== 'Bearer' || !token) {
-    return next(
-      new AuthenticationError(
-        'Invalid Authorization format. Expected: Bearer <token>.',
-      ),
-    );
-  }
-
-  const user = verifyToken(token);
-
-  if (!user) {
-    return next(
-      new AuthenticationError('Invalid or expired authentication token.'),
-    );
-  }
-
-  // Attach verified user context to request
-  req.user = user;
-  next();
 };

@@ -1,8 +1,8 @@
 /**
  * API Response envelope type definitions
  */
-import type { PaginationMeta } from './pagination.js';
-import type { ApiErrorPayload } from './error.js';
+import type { PaginationMeta } from "./pagination.js";
+import type { ApiErrorPayload } from "./error.js";
 
 export interface ApiMeta {
   timestamp: string;
