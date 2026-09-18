@@ -1,6 +1,6 @@
 /** Reads and writes resume records in Supabase. */
-import 'dotenv/config';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import "dotenv/config";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 export interface ResumeRecord {
   id: string;
@@ -26,7 +26,7 @@ function getClient(): SupabaseClient {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
-    throw new Error('Supabase is not configured. See docs/database.md.');
+    throw new Error("Supabase is not configured. See docs/database.md.");
   }
 
   client = createClient(url, key);
@@ -57,7 +57,7 @@ function toRecord(row: ResumeRow): ResumeRecord {
 // Save - Store one resume and return what was written
 export async function saveResume(resume: NewResume): Promise<ResumeRecord> {
   const { data, error } = await getClient()
-    .from('resumes')
+    .from("resumes")
     .insert({
       filename: resume.filename,
       file_size: resume.fileSize,
@@ -74,9 +74,9 @@ export async function saveResume(resume: NewResume): Promise<ResumeRecord> {
 // Fetch - Look one up by id, null when it does not exist
 export async function getResumeById(id: string): Promise<ResumeRecord | null> {
   const { data, error } = await getClient()
-    .from('resumes')
+    .from("resumes")
     .select()
-    .eq('id', id)
+    .eq("id", id)
     .maybeSingle();
 
   if (error) throw new Error(`Could not read resume: ${error.message}`);

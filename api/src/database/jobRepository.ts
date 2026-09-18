@@ -27,7 +27,9 @@ class JobRepository {
   }
 
   findAll(): Job[] {
-    return [...this.jobs.values()].sort((a, b) => a.title.localeCompare(b.title));
+    return [...this.jobs.values()].sort((a, b) =>
+      a.title.localeCompare(b.title),
+    );
   }
 
   findById(id: string): Job | undefined {
@@ -43,7 +45,9 @@ class JobRepository {
 
   findByCategory(category: string): Job[] {
     const normalized = category.trim().toLowerCase();
-    return this.findAll().filter((job) => job.category.toLowerCase() === normalized);
+    return this.findAll().filter(
+      (job) => job.category.toLowerCase() === normalized,
+    );
   }
 }
 
