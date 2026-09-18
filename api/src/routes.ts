@@ -25,9 +25,12 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 router.post("/auth/signup", signUp);
 router.get("/auth/me", requireAuthentication, getCurrentUser);
+
 router.get("/jobs", listJobs);
 router.get("/jobs/:id", getJob);
+
 router.post("/career-profile", requireAuthentication, createCareerProfile);
+
 router.get("/career-profile", requireAuthentication, getCareerProfile);
 
 router.post("/projects", requireAuthentication, createProject);
