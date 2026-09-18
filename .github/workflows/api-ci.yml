@@ -26,8 +26,8 @@ jobs:
 
       - run: npm ci
 
-      - name: Lint
-        run: npm run lint
+      - name: format 
+        run: npm run format && git diff --exit-code 
 
       - name: Build
         run: npm run build
