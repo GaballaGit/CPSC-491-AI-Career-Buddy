@@ -1,5 +1,8 @@
 /** Request validation helpers shared by controllers. */
-import { RESUME_ALLOWED_EXTENSIONS, RESUME_MAX_BYTES } from "../constants/index.js";
+import {
+  RESUME_ALLOWED_EXTENSIONS,
+  RESUME_MAX_BYTES,
+} from "../constants/index.js";
 import type {
   CreateCareerProfileDto,
   ExperienceLevel,
