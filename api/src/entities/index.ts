@@ -6,4 +6,14 @@ export type {
   CreateProjectDto,
   UpdateProjectDto,
   ProjectSummary,
-} from './project.js';
+} from "./project.js";
+
+export type { Job, RequiredSkill, CreateJobDto, UpdateJobDto } from "./job.js";
+
+export type {
+  CareerProfile,
+  ExperienceLevel,
+  LearningPreference,
+  CreateCareerProfileDto,
+  UpdateCareerProfileDto,
+} from "./careerProfile.js";

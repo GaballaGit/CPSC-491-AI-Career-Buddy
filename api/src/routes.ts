@@ -1,48 +1,60 @@
 /** Route registration lives here so index.ts only bootstraps the server. */
 
-import { Router } from 'express';
+import { Router } from "express";
 
+import {
+  getCurrentUser,
+  signUp,
+} from "./controllers/authentication.js";
+import { getJob, listJobs } from "./controllers/jobs.js";
 import {
   createProject,
   deleteProject,
   getProject,
   getProjects,
   updateProject,
-} from './controllers/projects.js';
-import { requireAuthentication } from './middleware/authentication.js';
+} from "./controllers/projects.js";
+import { requireAuthentication } from "./middleware/authentication.js";
 
 export const router = Router();
 
-/**
- * Project routes
- * All project operations require authentication.
- */
+router.post("/auth/signup", signUp);
+
+router.get(
+  "/auth/me",
+  requireAuthentication,
+  getCurrentUser,
+);
+
+router.get("/jobs", listJobs);
+router.get("/jobs/:id", getJob);
+
 router.post(
-  '/projects',
+  "/projects",
   requireAuthentication,
   createProject,
 );
 
 router.get(
-  '/projects',
+  "/projects",
   requireAuthentication,
   getProjects,
 );
 
 router.get(
-  '/projects/:id',
+  "/projects/:id",
   requireAuthentication,
   getProject,
 );
 
 router.patch(
-  '/projects/:id',
+  "/projects/:id",
   requireAuthentication,
   updateProject,
 );
 
 router.delete(
-  '/projects/:id',
+  "/projects/:id",
   requireAuthentication,
   deleteProject,
 );
