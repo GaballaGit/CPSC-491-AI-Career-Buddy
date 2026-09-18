@@ -7,3 +7,5 @@ export type {
   UpdateProjectDto,
   ProjectSummary,
 } from "./project.js";
+
+export type { Job, RequiredSkill, CreateJobDto, UpdateJobDto } from "./job.js";

@@ -18,7 +18,10 @@ export interface MigrationFile {
 /**
  * List of registered domain migrations in execution order
  */
-export const registeredMigrations: string[] = ["001_create_projects.sql"];
+export const registeredMigrations: string[] = [
+  "001_create_projects.sql",
+  "002_create_jobs.sql",
+];
 
 /**
  * Load available migration files from the migrations directory

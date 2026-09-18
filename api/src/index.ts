@@ -1,5 +1,6 @@
 import express, { type Request, type Response } from "express";
 import { ExpressAuth } from "@auth/express";
+
 import { authConfig } from "./auth/config.js";
 import { errorHandler } from "./middleware/errors.js";
 import { router } from "./routes.js";

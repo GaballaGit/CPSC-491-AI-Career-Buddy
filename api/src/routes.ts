@@ -1,5 +1,6 @@
 /** Route registration lives here so index.ts only bootstraps the server. */
 import { Router } from "express";
+
 import { getCurrentUser, signUp } from "./controllers/authentication.js";
 import { requireAuthentication } from "./middleware/authentication.js";
 
