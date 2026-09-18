@@ -5,6 +5,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { jobRepository } from "./jobRepository.js";
+import { sampleJobs } from "./seed/jobs.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,7 +52,7 @@ export async function runMigrations(): Promise<string[]> {
   return migrations.map((m) => m.name);
 }
 
-export async function seedDatabase(): Promise<never> {
-  // TODO: seed repeatable sample jobs for local development.
-  throw new Error("Database seeding is not implemented");
+export async function seedDatabase(): Promise<number> {
+  jobRepository.replaceAll(sampleJobs);
+  return sampleJobs.length;
 }
