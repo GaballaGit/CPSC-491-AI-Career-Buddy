@@ -93,6 +93,12 @@ export default function ProfilePage() {
             </div>
           </dl>
         )}
+        <Link
+          href="/roadmap"
+          className="mt-6 inline-block rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background"
+        >
+          View Roadmap
+        </Link>
       </div>
     </div>
   );
