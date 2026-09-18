@@ -26,8 +26,26 @@ const LEARNING_PREFERENCES: readonly LearningPreference[] = [
   "structured_courses",
 ];
 
+// Keep in sync with site/career-buddy-site/app/onboarding/validation.ts.
+const TARGET_CAREER_MAX_LENGTH = 100;
+const SKILL_MAX_LENGTH = 50;
+const MAX_SKILLS = 30;
+const MIN_WEEKLY_HOURS = 1;
+const MAX_WEEKLY_HOURS = 168;
+
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+// Keeps the first spelling of each skill ("React", "react" -> "React").
+function dedupeSkills(skills: string[]): string[] {
+  const seen = new Set<string>();
+  return skills.filter((skill) => {
+    const key = skill.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 // Resume Upload - Reject bad files before extraction runs
@@ -81,10 +99,10 @@ export function validateCreateCareerProfile(
       field: "target_career",
       message: "target_career is required.",
     });
-  } else if (targetCareer.trim().length > 100) {
+  } else if (targetCareer.trim().length > TARGET_CAREER_MAX_LENGTH) {
     errors.push({
       field: "target_career",
-      message: "target_career must be 100 characters or fewer.",
+      message: `target_career must be ${TARGET_CAREER_MAX_LENGTH} characters or fewer.`,
     });
   }
 
@@ -96,16 +114,29 @@ export function validateCreateCareerProfile(
     });
   }
 
-  const skills = input.skills;
+  let skills: string[] = [];
   if (
-    !Array.isArray(skills) ||
-    skills.length === 0 ||
-    !skills.every(isNonEmptyString)
+    !Array.isArray(input.skills) ||
+    input.skills.length === 0 ||
+    !input.skills.every(isNonEmptyString)
   ) {
     errors.push({
       field: "skills",
       message: "skills must be a non-empty array of non-empty strings.",
     });
+  } else {
+    skills = dedupeSkills(input.skills.map((skill) => skill.trim()));
+    if (skills.some((skill) => skill.length > SKILL_MAX_LENGTH)) {
+      errors.push({
+        field: "skills",
+        message: `Each skill must be ${SKILL_MAX_LENGTH} characters or fewer.`,
+      });
+    } else if (skills.length > MAX_SKILLS) {
+      errors.push({
+        field: "skills",
+        message: `skills can have at most ${MAX_SKILLS} entries.`,
+      });
+    }
   }
 
   const learningPreferences = input.learning_preferences;
@@ -126,13 +157,12 @@ export function validateCreateCareerProfile(
   if (
     typeof hours !== "number" ||
     !Number.isInteger(hours) ||
-    hours < 1 ||
-    hours > 168
+    hours < MIN_WEEKLY_HOURS ||
+    hours > MAX_WEEKLY_HOURS
   ) {
     errors.push({
       field: "weekly_availability_hours",
-      message:
-        "weekly_availability_hours must be a whole number from 1 to 168.",
+      message: `weekly_availability_hours must be a whole number from ${MIN_WEEKLY_HOURS} to ${MAX_WEEKLY_HOURS}.`,
     });
   }
 
@@ -143,8 +173,10 @@ export function validateCreateCareerProfile(
   return {
     target_career: (targetCareer as string).trim(),
     experience_level: experienceLevel as ExperienceLevel,
-    skills: (skills as string[]).map((skill) => skill.trim()),
-    learning_preferences: learningPreferences as LearningPreference[],
+    skills,
+    learning_preferences: [
+      ...new Set(learningPreferences as LearningPreference[]),
+    ],
     weekly_availability_hours: hours as number,
   };
 }
