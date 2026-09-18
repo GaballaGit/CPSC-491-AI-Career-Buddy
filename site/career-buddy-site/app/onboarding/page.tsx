@@ -8,6 +8,7 @@ import {
   type OnboardingFormData,
 } from "./types";
 import { EXPERIENCE_LEVELS, LEARNING_PREFERENCES } from "./options";
+import { LIMITS, validateNewSkill, validateStep } from "./validation";
 import {
   ApiError,
   saveCareerProfile,
@@ -31,45 +32,51 @@ export default function OnboardingPage() {
   const [skillInput, setSkillInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<ApiError | null>(null);
+  const [stepError, setStepError] = useState<string | null>(null);
+  const [skillError, setSkillError] = useState<string | null>(null);
 
   const isLastStep = step === STEPS.length - 1;
 
-  function canAdvance(): boolean {
-    switch (step) {
-      case 0:
-        return formData.targetCareer.trim().length > 0;
-      case 1:
-        return formData.experienceLevel !== "";
-      case 2:
-        return formData.skills.length > 0;
-      case 3:
-        return formData.learningPreferences.length > 0;
-      case 4:
-        return (
-          formData.weeklyAvailabilityHours !== "" &&
-          Number(formData.weeklyAvailabilityHours) > 0
-        );
-      default:
-        return true;
+  function update(change: (prev: OnboardingFormData) => OnboardingFormData) {
+    setFormData(change);
+    setStepError(null);
+  }
+
+  function goNext() {
+    const error = validateStep(step, formData);
+    if (error) {
+      setStepError(error);
+      return;
     }
+    setStep((s) => Math.min(STEPS.length - 1, s + 1));
+  }
+
+  function goBack() {
+    setStepError(null);
+    setStep((s) => Math.max(0, s - 1));
   }
 
   function addSkill() {
+    const error = validateNewSkill(skillInput, formData.skills);
+    if (error) {
+      setSkillError(error);
+      return;
+    }
     const skill = skillInput.trim();
-    if (!skill || formData.skills.includes(skill)) return;
-    setFormData((prev) => ({ ...prev, skills: [...prev.skills, skill] }));
+    update((prev) => ({ ...prev, skills: [...prev.skills, skill] }));
     setSkillInput("");
+    setSkillError(null);
   }
 
   function removeSkill(skill: string) {
-    setFormData((prev) => ({
+    update((prev) => ({
       ...prev,
       skills: prev.skills.filter((s) => s !== skill),
     }));
   }
 
   function toggleLearningPreference(pref: LearningPreference) {
-    setFormData((prev) => ({
+    update((prev) => ({
       ...prev,
       learningPreferences: prev.learningPreferences.includes(pref)
         ? prev.learningPreferences.filter((p) => p !== pref)
@@ -78,6 +85,14 @@ export default function OnboardingPage() {
   }
 
   async function handleSubmit() {
+    // Re-check every step, not just the last one, before sending.
+    const firstInvalid = STEPS.findIndex((_, i) => validateStep(i, formData));
+    if (firstInvalid !== -1) {
+      setStep(firstInvalid);
+      setStepError(validateStep(firstInvalid, formData));
+      return;
+    }
+
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -137,8 +152,10 @@ export default function OnboardingPage() {
               id="targetCareer"
               type="text"
               value={formData.targetCareer}
+              maxLength={LIMITS.targetCareerMaxLength}
+              aria-invalid={stepError !== null}
               onChange={(e) =>
-                setFormData((prev) => ({
+                update((prev) => ({
                   ...prev,
                   targetCareer: e.target.value,
                 }))
@@ -170,7 +187,7 @@ export default function OnboardingPage() {
                     value={value}
                     checked={formData.experienceLevel === value}
                     onChange={() =>
-                      setFormData((prev) => ({
+                      update((prev) => ({
                         ...prev,
                         experienceLevel: value,
                       }))
@@ -196,7 +213,12 @@ export default function OnboardingPage() {
                 id="skillInput"
                 type="text"
                 value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
+                maxLength={LIMITS.skillMaxLength}
+                aria-invalid={skillError !== null}
+                onChange={(e) => {
+                  setSkillInput(e.target.value);
+                  setSkillError(null);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -214,6 +236,14 @@ export default function OnboardingPage() {
                 Add
               </button>
             </div>
+            {skillError && (
+              <p
+                role="alert"
+                className="text-sm text-red-600 dark:text-red-400"
+              >
+                {skillError}
+              </p>
+            )}
             <div className="flex flex-wrap gap-2">
               {formData.skills.map((skill) => (
                 <span
@@ -271,11 +301,13 @@ export default function OnboardingPage() {
             <input
               id="availability"
               type="number"
-              min={1}
-              max={80}
+              min={LIMITS.minWeeklyHours}
+              max={LIMITS.maxWeeklyHours}
+              step={1}
               value={formData.weeklyAvailabilityHours}
+              aria-invalid={stepError !== null}
               onChange={(e) =>
-                setFormData((prev) => ({
+                update((prev) => ({
                   ...prev,
                   weeklyAvailabilityHours:
                     e.target.value === "" ? "" : Number(e.target.value),
@@ -285,6 +317,15 @@ export default function OnboardingPage() {
               className="rounded-lg border border-black/[.08] bg-transparent px-4 py-2.5 text-black outline-none focus:border-foreground dark:border-white/[.145] dark:text-zinc-50"
             />
           </div>
+        )}
+
+        {stepError && (
+          <p
+            role="alert"
+            className="mt-3 text-sm text-red-600 dark:text-red-400"
+          >
+            {stepError}
+          </p>
         )}
 
         {submitError && (
@@ -323,7 +364,7 @@ export default function OnboardingPage() {
         <div className="mt-8 flex items-center justify-between">
           <button
             type="button"
-            onClick={() => setStep((s) => Math.max(0, s - 1))}
+            onClick={goBack}
             disabled={step === 0}
             className="rounded-full border border-black/[.08] px-5 py-2.5 text-sm font-medium text-black disabled:opacity-40 dark:border-white/[.145] dark:text-zinc-50"
           >
@@ -333,7 +374,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={!canAdvance() || submitting}
+              disabled={submitting}
               className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background disabled:opacity-40"
             >
               {submitting ? "Submitting..." : "Finish"}
@@ -341,8 +382,7 @@ export default function OnboardingPage() {
           ) : (
             <button
               type="button"
-              onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
-              disabled={!canAdvance()}
+              onClick={goNext}
               className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background disabled:opacity-40"
             >
               Next
