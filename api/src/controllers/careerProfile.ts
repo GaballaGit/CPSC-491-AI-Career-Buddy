@@ -18,7 +18,16 @@ export const createCareerProfile: RequestHandler = async (req, res) => {
   });
 };
 
-export const getCareerProfile: RequestHandler = (_req, _res, next) => {
-  // TODO: return the authenticated user's profile or an empty/not-found result.
-  next(new Error("Career Profile controller is not implemented"));
+// No profile yet is normal for a new user, so it's a 200 with data: null
+// rather than a 404 the frontend would have to treat as an error.
+export const getCareerProfile: RequestHandler = async (req, res) => {
+  if (!req.user) throw new AuthenticationError();
+
+  const profile = await careerProfileRepository.findByUser(req.user.id);
+
+  res.json({
+    success: true,
+    data: profile,
+    meta: { timestamp: new Date().toISOString() },
+  });
 };
