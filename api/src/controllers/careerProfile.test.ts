@@ -215,6 +215,57 @@ describe("POST /api/career-profile", () => {
     assert.equal(upsertForUser.mock.callCount(), 0);
   });
 
+  it("rejects a body that isn't valid JSON", async () => {
+    const response = await fetch(`${baseUrl}/api/career-profile`, {
+      method: "POST",
+      headers: { ...JSON_HEADERS, cookie: alice.cookie },
+      body: "{not json",
+    });
+    const body = (await response.json()) as {
+      error: { code: string; message: string };
+    };
+
+    assert.equal(response.status, 400);
+    assert.equal(body.error.code, "INVALID_REQUEST");
+    assert.equal(body.error.message, "Request body must be valid JSON.");
+    assert.equal(upsertForUser.mock.callCount(), 0);
+  });
+
+  it("removes duplicate skills and learning preferences", async () => {
+    const response = await postProfile(
+      {
+        ...validProfile,
+        skills: ["React", "react", " REACT ", "SQL"],
+        learning_preferences: ["reading", "videos", "reading"],
+      },
+      alice,
+    );
+    const body = (await response.json()) as { data: CareerProfile };
+
+    assert.equal(response.status, 201);
+    assert.deepEqual(body.data.skills, ["React", "SQL"]);
+    assert.deepEqual(body.data.learning_preferences, ["reading", "videos"]);
+  });
+
+  it("enforces the skill length and count limits", async () => {
+    const skills = (count: number) =>
+      Array.from({ length: count }, (_, i) => `skill-${i}`);
+    const cases: [string, string[], number][] = [
+      ["50-character skill", ["x".repeat(50)], 201],
+      ["51-character skill", ["x".repeat(51)], 400],
+      ["30 skills", skills(30), 201],
+      ["31 skills", skills(31), 400],
+    ];
+
+    for (const [name, value, expected] of cases) {
+      const response = await postProfile(
+        { ...validProfile, skills: value },
+        alice,
+      );
+      assert.equal(response.status, expected, name);
+    }
+  });
+
   it("rejects out-of-range weekly hours", async () => {
     for (const hours of [0, 169, 10.5]) {
       const response = await postProfile(
