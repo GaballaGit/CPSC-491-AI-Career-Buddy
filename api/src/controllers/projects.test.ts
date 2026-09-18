@@ -1,11 +1,22 @@
-import request from 'supertest';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getSession } from "@auth/express";
+import request from "supertest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { app } from '../app.js';
-import { projectRepository } from '../database/projectRepository.js';
-import type { Project } from '../entities/project.js';
+import { app } from "../app.js";
+import { projectRepository } from "../database/projectRepository.js";
+import type { Project } from "../entities/project.js";
 
-vi.mock('../database/projectRepository.js', () => ({
+vi.mock("@auth/express", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@auth/express")>();
+
+  return {
+    ...actual,
+    getSession: vi.fn(),
+  };
+});
+
+vi.mock("../database/projectRepository.js", () => ({
   projectRepository: {
     create: vi.fn(),
     findByUser: vi.fn(),
@@ -17,41 +28,52 @@ vi.mock('../database/projectRepository.js', () => ({
   },
 }));
 
-const userId = '11111111-1111-1111-1111-111111111111';
-const token = `dev_${userId}`;
+const userId =
+  "11111111-1111-1111-1111-111111111111";
 
 const sampleProject: Project = {
-  id: '22222222-2222-2222-2222-222222222222',
+  id: "22222222-2222-2222-2222-222222222222",
   user_id: userId,
-  title: 'CareerLM',
-  description: 'AI-powered career coaching platform',
-  skills_demonstrated: ['TypeScript', 'Express'],
+  title: "CareerLM",
+  description: "AI-powered career coaching platform",
+  skills_demonstrated: ["TypeScript", "Express"],
   project_urls: [],
-  status: 'in_progress',
-  created_at: '2026-09-17T20:00:00.000Z',
-  updated_at: '2026-09-17T20:00:00.000Z',
+  status: "in_progress",
+  created_at: "2026-09-17T20:00:00.000Z",
+  updated_at: "2026-09-17T20:00:00.000Z",
 };
 
-describe('Project creation and retrieval', () => {
+describe("Project creation and retrieval", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    vi.mocked(getSession).mockResolvedValue({
+      user: {
+        id: userId,
+        email: "project-test@example.com",
+      },
+      expires: "2099-01-01T00:00:00.000Z",
+    });
   });
 
-  describe('POST /api/projects', () => {
-    it('creates a project for the authenticated user', async () => {
+  describe("POST /api/projects", () => {
+    it("creates a project for the authenticated user", async () => {
       vi.mocked(projectRepository.create).mockResolvedValue(
         sampleProject,
       );
 
       const response = await request(app)
-        .post('/api/projects')
-        .set('Authorization', `Bearer ${token}`)
+        .post("/api/projects")
         .send({
-          title: 'CareerLM',
-          description: 'AI-powered career coaching platform',
-          skills_demonstrated: ['TypeScript', 'Express'],
+          title: "CareerLM",
+          description:
+            "AI-powered career coaching platform",
+          skills_demonstrated: [
+            "TypeScript",
+            "Express",
+          ],
           project_urls: [],
-          status: 'in_progress',
+          status: "in_progress",
         });
 
       expect(response.status).toBe(201);
@@ -60,28 +82,35 @@ describe('Project creation and retrieval', () => {
       expect(projectRepository.create).toHaveBeenCalledWith(
         userId,
         {
-          title: 'CareerLM',
-          description: 'AI-powered career coaching platform',
-          skills_demonstrated: ['TypeScript', 'Express'],
+          title: "CareerLM",
+          description:
+            "AI-powered career coaching platform",
+          skills_demonstrated: [
+            "TypeScript",
+            "Express",
+          ],
           project_urls: [],
-          status: 'in_progress',
+          status: "in_progress",
         },
       );
     });
 
-    it('rejects an unauthenticated request', async () => {
+    it("rejects an unauthenticated request", async () => {
+      vi.mocked(getSession).mockResolvedValueOnce(null);
+
       const response = await request(app)
-        .post('/api/projects')
+        .post("/api/projects")
         .send({
-          title: 'CareerLM',
-          description: 'AI-powered career coaching platform',
-          skills_demonstrated: ['TypeScript'],
+          title: "CareerLM",
+          description:
+            "AI-powered career coaching platform",
+          skills_demonstrated: ["TypeScript"],
         });
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
       expect(response.body.error.code).toBe(
-        'AUTHENTICATION_REQUIRED',
+        "AUTHENTICATION_REQUIRED",
       );
 
       expect(
@@ -89,20 +118,19 @@ describe('Project creation and retrieval', () => {
       ).not.toHaveBeenCalled();
     });
 
-    it('rejects invalid project data', async () => {
+    it("rejects invalid project data", async () => {
       const response = await request(app)
-        .post('/api/projects')
-        .set('Authorization', `Bearer ${token}`)
+        .post("/api/projects")
         .send({
-          title: '',
-          description: 'Test project',
-          skills_demonstrated: ['TypeScript'],
+          title: "",
+          description: "Test project",
+          skills_demonstrated: ["TypeScript"],
         });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
       expect(response.body.error.code).toBe(
-        'VALIDATION_ERROR',
+        "VALIDATION_ERROR",
       );
 
       expect(
@@ -111,15 +139,15 @@ describe('Project creation and retrieval', () => {
     });
   });
 
-  describe('GET /api/projects', () => {
-    it('returns projects belonging to the authenticated user', async () => {
+  describe("GET /api/projects", () => {
+    it("returns projects belonging to the authenticated user", async () => {
       vi.mocked(
         projectRepository.findByUser,
       ).mockResolvedValue([sampleProject]);
 
-      const response = await request(app)
-        .get('/api/projects')
-        .set('Authorization', `Bearer ${token}`);
+      const response = await request(app).get(
+        "/api/projects",
+      );
 
       expect(response.status).toBe(200);
       expect(response.body.data).toEqual([
@@ -131,14 +159,14 @@ describe('Project creation and retrieval', () => {
       ).toHaveBeenCalledWith(userId);
     });
 
-    it('returns an empty array when the user has no projects', async () => {
+    it("returns an empty array when the user has no projects", async () => {
       vi.mocked(
         projectRepository.findByUser,
       ).mockResolvedValue([]);
 
-      const response = await request(app)
-        .get('/api/projects')
-        .set('Authorization', `Bearer ${token}`);
+      const response = await request(app).get(
+        "/api/projects",
+      );
 
       expect(response.status).toBe(200);
       expect(response.body.data).toEqual([]);
@@ -148,15 +176,17 @@ describe('Project creation and retrieval', () => {
       ).toHaveBeenCalledWith(userId);
     });
 
-    it('rejects an unauthenticated request', async () => {
+    it("rejects an unauthenticated request", async () => {
+      vi.mocked(getSession).mockResolvedValueOnce(null);
+
       const response = await request(app).get(
-        '/api/projects',
+        "/api/projects",
       );
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
       expect(response.body.error.code).toBe(
-        'AUTHENTICATION_REQUIRED',
+        "AUTHENTICATION_REQUIRED",
       );
 
       expect(
@@ -165,15 +195,15 @@ describe('Project creation and retrieval', () => {
     });
   });
 
-  describe('GET /api/projects/:id', () => {
-    it('returns one project owned by the authenticated user', async () => {
+  describe("GET /api/projects/:id", () => {
+    it("returns one project owned by the authenticated user", async () => {
       vi.mocked(
         projectRepository.findById,
       ).mockResolvedValue(sampleProject);
 
-      const response = await request(app)
-        .get(`/api/projects/${sampleProject.id}`)
-        .set('Authorization', `Bearer ${token}`);
+      const response = await request(app).get(
+        `/api/projects/${sampleProject.id}`,
+      );
 
       expect(response.status).toBe(200);
       expect(response.body.data).toEqual(
@@ -188,24 +218,22 @@ describe('Project creation and retrieval', () => {
       );
     });
 
-    it('returns 404 when the project cannot be found for the user', async () => {
+    it("returns 404 when the project cannot be found for the user", async () => {
       vi.mocked(
         projectRepository.findById,
       ).mockResolvedValue(null);
 
-      const response = await request(app)
-        .get(
-          '/api/projects/33333333-3333-3333-3333-333333333333',
-        )
-        .set('Authorization', `Bearer ${token}`);
+      const response = await request(app).get(
+        "/api/projects/33333333-3333-3333-3333-333333333333",
+      );
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
       expect(response.body.error.code).toBe(
-        'PROJECT_NOT_FOUND',
+        "PROJECT_NOT_FOUND",
       );
       expect(response.body.error.message).toBe(
-        'Project not found.',
+        "Project not found.",
       );
     });
   });
