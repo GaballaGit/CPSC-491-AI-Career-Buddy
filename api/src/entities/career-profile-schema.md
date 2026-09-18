@@ -25,25 +25,27 @@ Each user has **at most one** Career Profile (one-to-one), unlike `projects`, wh
 
 ### 2.1 Table Definition: `career_profiles`
 
-| Column | Data Type | Constraints / Default | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Unique career profile identifier |
-| `user_id` | `UUID` | `NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE` | Foreign key referencing the authenticated Supabase user; `UNIQUE` enforces one profile per user |
-| `target_career` | `VARCHAR(100)` | `NOT NULL CHECK (char_length(target_career) BETWEEN 1 AND 100)` | Career the user is targeting (e.g. "Frontend Engineer") |
-| `experience_level` | `VARCHAR(20)` | `NOT NULL CHECK (experience_level IN ('beginner', 'intermediate', 'advanced'))` | Self-reported current experience level |
-| `skills` | `TEXT[]` | `NOT NULL DEFAULT '{}'` | Normalized skill tags the user already has (e.g. `['TypeScript', 'SQL']`) |
-| `learning_preferences` | `TEXT[]` | `NOT NULL DEFAULT '{}'` | One or more of `videos`, `reading`, `hands_on_projects`, `mentorship`, `structured_courses` |
-| `weekly_availability_hours` | `SMALLINT` | `NOT NULL CHECK (weekly_availability_hours BETWEEN 1 AND 168)` | Hours per week the user can dedicate to upskilling |
-| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Record creation timestamp |
-| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Record last update timestamp |
+| Column                      | Data Type      | Constraints / Default                                                           | Description                                                                                     |
+| :-------------------------- | :------------- | :------------------------------------------------------------------------------ | :---------------------------------------------------------------------------------------------- |
+| `id`                        | `UUID`         | `PRIMARY KEY DEFAULT gen_random_uuid()`                                         | Unique career profile identifier                                                                |
+| `user_id`                   | `UUID`         | `NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE`                   | Foreign key referencing the authenticated Supabase user; `UNIQUE` enforces one profile per user |
+| `target_career`             | `VARCHAR(100)` | `NOT NULL CHECK (char_length(target_career) BETWEEN 1 AND 100)`                 | Career the user is targeting (e.g. "Frontend Engineer")                                         |
+| `experience_level`          | `VARCHAR(20)`  | `NOT NULL CHECK (experience_level IN ('beginner', 'intermediate', 'advanced'))` | Self-reported current experience level                                                          |
+| `skills`                    | `TEXT[]`       | `NOT NULL DEFAULT '{}'`                                                         | Normalized skill tags the user already has (e.g. `['TypeScript', 'SQL']`)                       |
+| `learning_preferences`      | `TEXT[]`       | `NOT NULL DEFAULT '{}'`                                                         | One or more of `videos`, `reading`, `hands_on_projects`, `mentorship`, `structured_courses`     |
+| `weekly_availability_hours` | `SMALLINT`     | `NOT NULL CHECK (weekly_availability_hours BETWEEN 1 AND 168)`                  | Hours per week the user can dedicate to upskilling                                              |
+| `created_at`                | `TIMESTAMPTZ`  | `NOT NULL DEFAULT NOW()`                                                        | Record creation timestamp                                                                       |
+| `updated_at`                | `TIMESTAMPTZ`  | `NOT NULL DEFAULT NOW()`                                                        | Record last update timestamp                                                                    |
 
 ### 2.2 Performance Indexes
-* `idx_career_profiles_user_id`: optimizes lookups for `WHERE user_id = $1`, and joins from other subsystems (Resume, Job, Portfolio) keying off the same `user_id`.
+
+- `idx_career_profiles_user_id`: optimizes lookups for `WHERE user_id = $1`, and joins from other subsystems (Resume, Job, Portfolio) keying off the same `user_id`.
 
 ### 2.3 Multi-Tenant Isolation & Row Level Security (RLS)
-* Supabase RLS is enabled on `career_profiles`.
-* All operations (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) enforce `auth.uid() = user_id`.
-* The Express application layer reinforces this constraint by binding `req.user.id` to every database query (see `careerProfileRepository` in KAN-4/KAN-5).
+
+- Supabase RLS is enabled on `career_profiles`.
+- All operations (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) enforce `auth.uid() = user_id`.
+- The Express application layer reinforces this constraint by binding `req.user.id` to every database query (see `careerProfileRepository` in KAN-4/KAN-5).
 
 ---
 
@@ -52,29 +54,81 @@ Each user has **at most one** Career Profile (one-to-one), unlike `projects`, wh
 Every field on this entity maps 1:1 to `OnboardingFormData`
 (`site/career-buddy-site/app/onboarding/types.ts`):
 
-| Onboarding form field | `career_profiles` column |
-| :--- | :--- |
-| `targetCareer` | `target_career` |
-| `experienceLevel` | `experience_level` |
-| `skills` | `skills` |
-| `learningPreferences` | `learning_preferences` |
+| Onboarding form field     | `career_profiles` column    |
+| :------------------------ | :-------------------------- |
+| `targetCareer`            | `target_career`             |
+| `experienceLevel`         | `experience_level`          |
+| `skills`                  | `skills`                    |
+| `learningPreferences`     | `learning_preferences`      |
 | `weeklyAvailabilityHours` | `weekly_availability_hours` |
 
-When KAN-4 (save Career Profile data) is implemented, `POST /career-profile` should accept this same shape so the onboarding form's existing payload can be sent with no client-side remapping.
+The API uses the snake_case column names (matching `CreateCareerProfileDto` and the projects API), so the frontend maps its camelCase form fields to them when submitting.
+
+### 3.1 `POST /api/career-profile` (KAN-4)
+
+Requires an authenticated session. Creates the current user's Career Profile, or replaces it if one already exists (one profile per user).
+
+Request body:
+
+```json
+{
+  "target_career": "Frontend Engineer",
+  "experience_level": "intermediate",
+  "skills": ["TypeScript", "React"],
+  "learning_preferences": ["hands_on_projects", "reading"],
+  "weekly_availability_hours": 10
+}
+```
+
+| Status | When            | Body                                                                                                                                      |
+| :----- | :-------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
+| `201`  | Saved           | `{ success: true, data: CareerProfile, meta: { timestamp } }`                                                                             |
+| `400`  | Invalid payload | `{ success: false, error: { code: "VALIDATION_ERROR", message, details: [{ field, message }] } }` — one `details` entry per invalid field |
+| `401`  | Not signed in   | `{ success: false, error: { code: "AUTHENTICATION_REQUIRED", message } }`                                                                 |
+
+Validation mirrors the table constraints: `target_career` 1–100 characters, `experience_level` and each `learning_preferences` item from the allowed values, `skills` and `learning_preferences` non-empty, `weekly_availability_hours` a whole number from 1 to 168.
+
+### 3.2 `GET /api/career-profile` (KAN-5)
+
+Requires an authenticated session. Returns the current user's Career Profile. Other subsystems (Resume, Job, Portfolio, Roadmap) should read the profile through this endpoint rather than querying `career_profiles` directly.
+
+| Status | When           | Body                                                                      |
+| :----- | :------------- | :------------------------------------------------------------------------ |
+| `200`  | Profile exists | `{ success: true, data: CareerProfile, meta: { timestamp } }`             |
+| `200`  | No profile yet | `{ success: true, data: null, meta: { timestamp } }`                      |
+| `401`  | Not signed in  | `{ success: false, error: { code: "AUTHENTICATION_REQUIRED", message } }` |
+
+Having no profile yet is a normal state for a new user, not an error, so it returns `200` with `data: null` instead of `404`. Check `data === null` to send the user to onboarding.
+
+Example `data` when a profile exists:
+
+```json
+{
+  "id": "5f1c…",
+  "user_id": "9a2e…",
+  "target_career": "Frontend Engineer",
+  "experience_level": "intermediate",
+  "skills": ["TypeScript", "React"],
+  "learning_preferences": ["hands_on_projects", "reading"],
+  "weekly_availability_hours": 10,
+  "created_at": "2026-09-18T02:00:00.000Z",
+  "updated_at": "2026-09-18T02:00:00.000Z"
+}
+```
 
 ---
 
 ## 4. TypeScript Contracts
 
 ```typescript
-export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
+export type ExperienceLevel = "beginner" | "intermediate" | "advanced";
 
 export type LearningPreference =
-  | 'videos'
-  | 'reading'
-  | 'hands_on_projects'
-  | 'mentorship'
-  | 'structured_courses';
+  | "videos"
+  | "reading"
+  | "hands_on_projects"
+  | "mentorship"
+  | "structured_courses";
 
 // Core Entity
 export interface CareerProfile {

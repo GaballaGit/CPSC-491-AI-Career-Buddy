@@ -10,8 +10,10 @@ export const listJobs: RequestHandler = (req, res) => {
     throw new ValidationError("page and limit must be integers");
   }
 
-  const skill = typeof req.query.skill === "string" ? req.query.skill : undefined;
-  const category = typeof req.query.category === "string" ? req.query.category : undefined;
+  const skill =
+    typeof req.query.skill === "string" ? req.query.skill : undefined;
+  const category =
+    typeof req.query.category === "string" ? req.query.category : undefined;
   const jobs = category
     ? jobRepository.findByCategory(category)
     : skill
@@ -24,7 +26,12 @@ export const listJobs: RequestHandler = (req, res) => {
     data: jobs.slice(start, start + limit),
     meta: {
       timestamp: new Date().toISOString(),
-      pagination: { page, limit, total: jobs.length, totalPages: Math.ceil(jobs.length / limit) },
+      pagination: {
+        page,
+        limit,
+        total: jobs.length,
+        totalPages: Math.ceil(jobs.length / limit),
+      },
     },
   });
 };
@@ -35,5 +42,9 @@ export const getJob: RequestHandler = (req, res) => {
   const job = jobRepository.findById(id);
   if (!job) throw new NotFoundError("Job not found.");
 
-  res.json({ success: true, data: job, meta: { timestamp: new Date().toISOString() } });
+  res.json({
+    success: true,
+    data: job,
+    meta: { timestamp: new Date().toISOString() },
+  });
 };

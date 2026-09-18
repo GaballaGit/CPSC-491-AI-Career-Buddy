@@ -1,11 +1,11 @@
 /** Route registration lives here so index.ts only bootstraps the server. */
-
 import { Router } from "express";
 
+import { getCurrentUser, signUp } from "./controllers/authentication.js";
 import {
-  getCurrentUser,
-  signUp,
-} from "./controllers/authentication.js";
+  createCareerProfile,
+  getCareerProfile,
+} from "./controllers/careerProfile.js";
 import { getJob, listJobs } from "./controllers/jobs.js";
 import {
   createProject,
@@ -19,42 +19,25 @@ import { requireAuthentication } from "./middleware/authentication.js";
 export const router = Router();
 
 router.post("/auth/signup", signUp);
-
-router.get(
-  "/auth/me",
-  requireAuthentication,
-  getCurrentUser,
-);
+router.get("/auth/me", requireAuthentication, getCurrentUser);
 
 router.get("/jobs", listJobs);
 router.get("/jobs/:id", getJob);
 
 router.post(
-  "/projects",
+  "/career-profile",
   requireAuthentication,
-  createProject,
+  createCareerProfile,
 );
 
 router.get(
-  "/projects",
+  "/career-profile",
   requireAuthentication,
-  getProjects,
+  getCareerProfile,
 );
 
-router.get(
-  "/projects/:id",
-  requireAuthentication,
-  getProject,
-);
-
-router.patch(
-  "/projects/:id",
-  requireAuthentication,
-  updateProject,
-);
-
-router.delete(
-  "/projects/:id",
-  requireAuthentication,
-  deleteProject,
-);
+router.post("/projects", requireAuthentication, createProject);
+router.get("/projects", requireAuthentication, getProjects);
+router.get("/projects/:id", requireAuthentication, getProject);
+router.patch("/projects/:id", requireAuthentication, updateProject);
+router.delete("/projects/:id", requireAuthentication, deleteProject);

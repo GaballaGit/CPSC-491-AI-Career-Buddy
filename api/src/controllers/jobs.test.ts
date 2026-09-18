@@ -20,7 +20,10 @@ after(() => server.close());
 describe("job retrieval API", () => {
   it("lists seeded jobs", async () => {
     const response = await fetch(`${baseUrl}/api/jobs`);
-    const body = (await response.json()) as { success: boolean; data: { id: string }[] };
+    const body = (await response.json()) as {
+      success: boolean;
+      data: { id: string }[];
+    };
 
     assert.equal(response.status, 200);
     assert.equal(body.success, true);
@@ -31,7 +34,10 @@ describe("job retrieval API", () => {
     const listResponse = await fetch(`${baseUrl}/api/jobs?limit=1`);
     const list = (await listResponse.json()) as { data: { id: string }[] };
     const response = await fetch(`${baseUrl}/api/jobs/${list.data[0]!.id}`);
-    const body = (await response.json()) as { success: boolean; data: { required_skills: { name: string }[] } };
+    const body = (await response.json()) as {
+      success: boolean;
+      data: { required_skills: { name: string }[] };
+    };
 
     assert.equal(response.status, 200);
     assert.equal(body.success, true);
@@ -40,7 +46,10 @@ describe("job retrieval API", () => {
 
   it("returns not found for an unknown job", async () => {
     const response = await fetch(`${baseUrl}/api/jobs/not-a-real-job`);
-    const body = (await response.json()) as { success: boolean; error: { code: string } };
+    const body = (await response.json()) as {
+      success: boolean;
+      error: { code: string };
+    };
 
     assert.equal(response.status, 404);
     assert.equal(body.success, false);
