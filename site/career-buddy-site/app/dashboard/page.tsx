@@ -1,19 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import {
-  useEffect,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useEffect, useState } from "react";
 
+import {
+  getCareerProfile,
+  type CareerProfile,
+} from "../../lib/careerProfile";
 import { getProjects } from "../../lib/projects";
 import { EXPERIENCE_LEVELS } from "../onboarding/options";
-import { loadOnboardingLocally } from "../onboarding/storage";
 import type { ExperienceLevel } from "../onboarding/types";
 
 function experienceLabel(
-  value: ExperienceLevel | "",
+  value: ExperienceLevel,
 ): string {
   return (
     EXPERIENCE_LEVELS.find(
@@ -22,20 +21,33 @@ function experienceLabel(
   );
 }
 
-function subscribeToNothing() {
-  return () => {};
-}
-
-function getServerSnapshot() {
-  return null;
-}
-
 export default function DashboardPage() {
-  const profile = useSyncExternalStore(
-    subscribeToNothing,
-    loadOnboardingLocally,
-    getServerSnapshot,
-  );
+  const [profile, setProfile] =
+    useState<CareerProfile | null>(null);
+  const [profileLoading, setProfileLoading] =
+    useState(true);
+  const [profileUnavailable, setProfileUnavailable] =
+    useState(false);
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        setProfile(await getCareerProfile());
+      } catch {
+        setProfileUnavailable(true);
+      } finally {
+        setProfileLoading(false);
+      }
+    }
+
+    void loadProfile();
+  }, []);
+
+  const profileStatus = profileLoading
+    ? "Loading..."
+    : profileUnavailable
+      ? "Unavailable"
+      : "Not set";
 
   const [projectCount, setProjectCount] =
     useState<number | null>(null);
@@ -84,7 +96,7 @@ export default function DashboardPage() {
             </p>
 
             <p className="mt-2 text-lg font-semibold text-black dark:text-zinc-50">
-              {profile?.targetCareer || "Not set"}
+              {profile?.target_career ?? profileStatus}
             </p>
           </div>
 
@@ -95,8 +107,8 @@ export default function DashboardPage() {
 
             <p className="mt-2 text-lg font-semibold text-black dark:text-zinc-50">
               {profile
-                ? experienceLabel(profile.experienceLevel)
-                : "Not set"}
+                ? experienceLabel(profile.experience_level)
+                : profileStatus}
             </p>
           </div>
 
@@ -106,7 +118,11 @@ export default function DashboardPage() {
             </p>
 
             <p className="mt-2 text-lg font-semibold text-black dark:text-zinc-50">
-              {profile ? profile.skills.length : 0}
+              {profile
+                ? profile.skills.length
+                : profileLoading || profileUnavailable
+                  ? profileStatus
+                  : 0}
             </p>
           </div>
 
@@ -136,7 +152,7 @@ export default function DashboardPage() {
                 <p>
                   Target:{" "}
                   <span className="font-medium text-black dark:text-zinc-50">
-                    {profile.targetCareer || "Not set"}
+                    {profile.target_career}
                   </span>
                 </p>
 
@@ -144,7 +160,7 @@ export default function DashboardPage() {
                   Experience:{" "}
                   <span className="font-medium text-black dark:text-zinc-50">
                     {experienceLabel(
-                      profile.experienceLevel,
+                      profile.experience_level,
                     )}
                   </span>
                 </p>
@@ -158,8 +174,11 @@ export default function DashboardPage() {
               </div>
             ) : (
               <p className="mt-3 flex-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                Complete onboarding to create your career
-                profile.
+                {profileLoading
+                  ? "Loading your career profile..."
+                  : profileUnavailable
+                    ? "Career profile is currently unavailable."
+                    : "Complete onboarding to create your career profile."}
               </p>
             )}
 

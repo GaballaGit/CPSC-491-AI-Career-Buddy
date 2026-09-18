@@ -8,7 +8,11 @@ import {
   type OnboardingFormData,
 } from "./types";
 import { EXPERIENCE_LEVELS, LEARNING_PREFERENCES } from "./options";
-import { saveOnboardingLocally } from "./storage";
+import {
+  ApiError,
+  saveCareerProfile,
+  SIGN_IN_URL,
+} from "../../lib/careerProfile";
 
 const STEPS = [
   "Target Career",
@@ -26,6 +30,7 @@ export default function OnboardingPage() {
   );
   const [skillInput, setSkillInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<ApiError | null>(null);
 
   const isLastStep = step === STEPS.length - 1;
 
@@ -74,8 +79,18 @@ export default function OnboardingPage() {
 
   async function handleSubmit() {
     setSubmitting(true);
-    await saveOnboardingLocally(formData);
-    router.push("/profile");
+    setSubmitError(null);
+    try {
+      await saveCareerProfile(formData);
+      router.push("/profile");
+    } catch (error) {
+      setSubmitError(
+        error instanceof ApiError
+          ? error
+          : new ApiError("Something went wrong.", 0),
+      );
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -161,9 +176,7 @@ export default function OnboardingPage() {
                       }))
                     }
                   />
-                  <span className="text-black dark:text-zinc-50">
-                    {label}
-                  </span>
+                  <span className="text-black dark:text-zinc-50">{label}</span>
                 </label>
               ))}
             </div>
@@ -271,6 +284,39 @@ export default function OnboardingPage() {
               placeholder="e.g. 10"
               className="rounded-lg border border-black/[.08] bg-transparent px-4 py-2.5 text-black outline-none focus:border-foreground dark:border-white/[.145] dark:text-zinc-50"
             />
+          </div>
+        )}
+
+        {submitError && (
+          <div
+            role="alert"
+            className="mt-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-200"
+          >
+            {submitError.status === 401 ? (
+              <p>
+                You need to sign in to save your profile.{" "}
+                <a
+                  href={SIGN_IN_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium underline"
+                >
+                  Sign in
+                </a>{" "}
+                in a new tab, then press Finish again. Your answers are kept.
+              </p>
+            ) : (
+              <>
+                <p>Couldn&apos;t save your profile. {submitError.message}</p>
+                {submitError.details.length > 0 && (
+                  <ul className="mt-1 list-disc pl-5">
+                    {submitError.details.map((detail) => (
+                      <li key={detail.field}>{detail.message}</li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
           </div>
         )}
 
