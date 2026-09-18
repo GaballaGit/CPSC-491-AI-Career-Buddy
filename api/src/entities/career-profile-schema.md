@@ -84,9 +84,16 @@ Request body:
 | :----- | :-------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
 | `201`  | Saved           | `{ success: true, data: CareerProfile, meta: { timestamp } }`                                                                             |
 | `400`  | Invalid payload | `{ success: false, error: { code: "VALIDATION_ERROR", message, details: [{ field, message }] } }` — one `details` entry per invalid field |
+| `400`  | Body isn't JSON | `{ success: false, error: { code: "INVALID_REQUEST", message: "Request body must be valid JSON." } }`                                     |
 | `401`  | Not signed in   | `{ success: false, error: { code: "AUTHENTICATION_REQUIRED", message } }`                                                                 |
 
-Validation mirrors the table constraints: `target_career` 1–100 characters, `experience_level` and each `learning_preferences` item from the allowed values, `skills` and `learning_preferences` non-empty, `weekly_availability_hours` a whole number from 1 to 168.
+Validation rules (the onboarding form enforces the same limits):
+
+- `target_career`: required, 1–100 characters after trimming.
+- `experience_level`: one of the allowed values.
+- `skills`: 1–30 non-empty strings, each up to 50 characters. Values are trimmed and duplicates removed case-insensitively, keeping the first spelling (`["React", "react"]` → `["React"]`).
+- `learning_preferences`: at least one of the allowed values; duplicates removed.
+- `weekly_availability_hours`: a whole number from 1 to 168.
 
 ### 3.2 `GET /api/career-profile` (KAN-5)
 
