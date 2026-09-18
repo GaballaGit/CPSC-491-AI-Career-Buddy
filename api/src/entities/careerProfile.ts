@@ -7,14 +7,14 @@
  * career-profile-schema.md for the full schema and cross-subsystem contract.
  */
 
-export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
+export type ExperienceLevel = "beginner" | "intermediate" | "advanced";
 
 export type LearningPreference =
-  | 'videos'
-  | 'reading'
-  | 'hands_on_projects'
-  | 'mentorship'
-  | 'structured_courses';
+  | "videos"
+  | "reading"
+  | "hands_on_projects"
+  | "mentorship"
+  | "structured_courses";
 
 /**
  * Core Career Profile Domain Entity representing a user's target career,

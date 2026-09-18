@@ -1,4 +1,4 @@
--- Migration: 002_create_career_profiles.sql
+-- Migration: 003_create_career_profiles.sql
 -- Description: Create career_profiles table storing each user's target career,
 --              experience level, skills, learning preferences, and weekly availability
 -- Author: Jim Alvarez (Member 1 — Career Profile)

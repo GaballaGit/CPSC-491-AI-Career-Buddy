@@ -1,15 +1,15 @@
 /** Resume text extraction: turns an uploaded PDF or DOCX into plain text. */
-import mammoth from 'mammoth';
-import { extractText, getDocumentProxy } from 'unpdf';
+import mammoth from "mammoth";
+import { extractText, getDocumentProxy } from "unpdf";
 
-import { ResumeExtractionError } from '../errors/index.js';
+import { ResumeExtractionError } from "../errors/index.js";
 
 // Format Adjustments - Collapse whitespace
 function normalize(text: string): string {
   return text
-    .replace(/\r\n/g, '\n')
-    .replace(/[ \t]+/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
@@ -18,17 +18,17 @@ export async function extractResumeText(
   buffer: Buffer,
   filename: string,
 ): Promise<string> {
-  const ext = filename.toLowerCase().split('.').pop();
+  const ext = filename.toLowerCase().split(".").pop();
   let raw: string;
 
   // PDF Branch - unpdf
-  if (ext === 'pdf') {
+  if (ext === "pdf") {
     const pdf = await getDocumentProxy(new Uint8Array(buffer));
     const result = await extractText(pdf, { mergePages: true });
     raw = result.text as string;
 
     // DOCX Branch - mammoth
-  } else if (ext === 'docx') {
+  } else if (ext === "docx") {
     const result = await mammoth.extractRawText({ buffer });
     raw = result.value;
 
@@ -42,7 +42,7 @@ export async function extractResumeText(
   // Empty Result - Likely a scanned image
   if (!text) {
     throw new ResumeExtractionError(
-      'No readable text found. The file may be a scanned image.',
+      "No readable text found. The file may be a scanned image.",
     );
   }
 
