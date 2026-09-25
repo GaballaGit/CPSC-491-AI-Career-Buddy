@@ -247,6 +247,17 @@ describe("POST /api/career-profile", () => {
     assert.deepEqual(body.data.learning_preferences, ["reading", "videos"]);
   });
 
+  it("saves skill aliases under their canonical name", async () => {
+    const response = await postProfile(
+      { ...validProfile, skills: ["js", "JavaScript", "nodejs", "postgres"] },
+      alice,
+    );
+    const body = (await response.json()) as { data: CareerProfile };
+
+    assert.equal(response.status, 201);
+    assert.deepEqual(body.data.skills, ["JavaScript", "Node.js", "PostgreSQL"]);
+  });
+
   it("enforces the skill length and count limits", async () => {
     const skills = (count: number) =>
       Array.from({ length: count }, (_, i) => `skill-${i}`);
