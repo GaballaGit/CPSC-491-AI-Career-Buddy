@@ -11,9 +11,10 @@ import type {
   CreateCareerProfileDto,
 } from "../entities/index.js";
 
-// Auth is real (sign up + Auth.js credentials sign-in); only the database is
-// replaced with an in-memory store so the tests don't need Supabase.
+// Auth and the database are replaced with in-memory fakes so the tests don't
+// need Supabase.
 const store = new Map<string, CareerProfile>();
+const tokenToUser = new Map<string, { id: string; email: string }>();
 
 const upsertForUser = mock.method(
   careerProfileRepository,
@@ -39,7 +40,6 @@ const findByUser = mock.method(
   async (userId: string) => store.get(userId) ?? null,
 );
 
-const PASSWORD = "password123";
 const JSON_HEADERS = { "content-type": "application/json" };
 
 const validProfile = {
@@ -52,7 +52,7 @@ const validProfile = {
 
 interface TestUser {
   id: string;
-  cookie: string;
+  token: string;
 }
 
 let server: Server;
@@ -60,51 +60,35 @@ let baseUrl: string;
 let alice: TestUser;
 let bob: TestUser;
 
-function sessionCookies(response: Response): string[] {
-  return response.headers.getSetCookie().map((cookie) => cookie.split(";")[0]);
-}
-
 async function signUpAndSignIn(email: string): Promise<TestUser> {
-  const signUp = await fetch(`${baseUrl}/api/auth/signup`, {
-    method: "POST",
-    headers: JSON_HEADERS,
-    body: JSON.stringify({ email, password: PASSWORD }),
-  });
-  assert.equal(signUp.status, 201, "sign-up should succeed");
-
-  const csrf = await fetch(`${baseUrl}/api/auth/csrf`);
-  const { csrfToken } = (await csrf.json()) as { csrfToken: string };
-
-  const signIn = await fetch(`${baseUrl}/api/auth/callback/credentials`, {
-    method: "POST",
-    redirect: "manual",
-    headers: {
-      "content-type": "application/x-www-form-urlencoded",
-      cookie: sessionCookies(csrf).join("; "),
-    },
-    body: new URLSearchParams({ email, password: PASSWORD, csrfToken }),
-  });
-  const cookie = sessionCookies(signIn).find((c) =>
-    c.startsWith("authjs.session-token="),
+  const id = randomUUID();
+  const token = `${email}-token`;
+  tokenToUser.set(token, { id, email });
+  process.env.SUPABASE_AUTH_TEST_USERS = JSON.stringify(
+    Object.fromEntries(tokenToUser),
   );
-  assert.ok(cookie, "sign-in should set a session cookie");
 
-  const me = await fetch(`${baseUrl}/api/auth/me`, { headers: { cookie } });
-  const body = (await me.json()) as { data: { user: { id: string } } };
-  return { id: body.data.user.id, cookie };
+  const me = await fetch(`${baseUrl}/api/auth/me`, {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  assert.equal(me.status, 200, "mock token should authenticate");
+
+  return { id, token };
 }
 
 function postProfile(body: unknown, user?: TestUser) {
   return fetch(`${baseUrl}/api/career-profile`, {
     method: "POST",
-    headers: user ? { ...JSON_HEADERS, cookie: user.cookie } : JSON_HEADERS,
+    headers: user
+      ? { ...JSON_HEADERS, authorization: `Bearer ${user.token}` }
+      : JSON_HEADERS,
     body: JSON.stringify(body),
   });
 }
 
 function getProfile(user?: TestUser) {
   return fetch(`${baseUrl}/api/career-profile`, {
-    headers: user ? { cookie: user.cookie } : {},
+    headers: user ? { authorization: `Bearer ${user.token}` } : {},
   });
 }
 
@@ -123,6 +107,7 @@ beforeEach(() => {
 
 after(() => {
   mock.restoreAll();
+  delete process.env.SUPABASE_AUTH_TEST_USERS;
   server.close();
 });
 
@@ -218,7 +203,7 @@ describe("POST /api/career-profile", () => {
   it("rejects a body that isn't valid JSON", async () => {
     const response = await fetch(`${baseUrl}/api/career-profile`, {
       method: "POST",
-      headers: { ...JSON_HEADERS, cookie: alice.cookie },
+      headers: { ...JSON_HEADERS, authorization: `Bearer ${alice.token}` },
       body: "{not json",
     });
     const body = (await response.json()) as {
