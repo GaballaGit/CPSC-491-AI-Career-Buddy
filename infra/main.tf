@@ -1,3 +1,4 @@
-provider "aws" {
-  region = var.aws_region
-}
+# CareerLM infrastructure managed through Terraform.
+#
+# Application deployment is handled separately by the
+# Cloudflare and Supabase deployment workflows.
