@@ -7,6 +7,7 @@
     "test": "npm run test:vitest && npm run test:node",
     "test:vitest": "vitest run --exclude src/controllers/jobs.test.ts --exclude src/controllers/careerProfile.test.ts --exclude src/utils/skills.test.ts --exclude src/database/__tests__/resumeRepository.test.ts",
     "test:node": "tsx --test src/controllers/jobs.test.ts src/controllers/careerProfile.test.ts src/utils/skills.test.ts",
+    "test:integration": "vitest run src/database/__tests__/resumeRepository.test.ts",
     "test:watch": "vitest",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -15,6 +16,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{ts,js,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,js,json,md,yml,yaml}\"",
     "db:check": "tsx src/database/checkConnection.ts"
   },
   "keywords": [],
