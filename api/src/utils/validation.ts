@@ -9,6 +9,7 @@ import type {
   LearningPreference,
 } from "../entities/index.js";
 import { ValidationError } from "../errors/index.js";
+import { normalizeSkills } from "./skills.js";
 
 type FieldError = { field: string; message: string };
 
@@ -35,17 +36,6 @@ const MAX_WEEKLY_HOURS = 168;
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
-}
-
-// Keeps the first spelling of each skill ("React", "react" -> "React").
-function dedupeSkills(skills: string[]): string[] {
-  const seen = new Set<string>();
-  return skills.filter((skill) => {
-    const key = skill.toLowerCase();
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
 }
 
 // Resume Upload - Reject bad files before extraction runs
@@ -125,7 +115,7 @@ export function validateCreateCareerProfile(
       message: "skills must be a non-empty array of non-empty strings.",
     });
   } else {
-    skills = dedupeSkills(input.skills.map((skill) => skill.trim()));
+    skills = normalizeSkills(input.skills).map((skill) => skill.name);
     if (skills.some((skill) => skill.length > SKILL_MAX_LENGTH)) {
       errors.push({
         field: "skills",

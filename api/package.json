@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "npm run test:vitest && npm run test:node",
-    "test:vitest": "vitest run --exclude src/controllers/jobs.test.ts --exclude src/controllers/careerProfile.test.ts --exclude src/database/__tests__/resumeRepository.test.ts",
-    "test:node": "tsx --test src/controllers/jobs.test.ts src/controllers/careerProfile.test.ts",
+    "test:vitest": "vitest run --exclude src/controllers/jobs.test.ts --exclude src/controllers/careerProfile.test.ts --exclude src/utils/skills.test.ts --exclude src/database/__tests__/resumeRepository.test.ts",
+    "test:node": "tsx --test src/controllers/jobs.test.ts src/controllers/careerProfile.test.ts src/utils/skills.test.ts",
     "test:watch": "vitest",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
