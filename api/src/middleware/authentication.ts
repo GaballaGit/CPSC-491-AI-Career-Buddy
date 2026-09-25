@@ -35,7 +35,8 @@ export const requireAuthentication: RequestHandler = async (
     req.user = {
       id: user.id,
       email: user.email,
-      ...(user.user_metadata?.name && typeof user.user_metadata.name === "string"
+      ...(user.user_metadata?.name &&
+      typeof user.user_metadata.name === "string"
         ? { name: user.user_metadata.name }
         : {}),
     };

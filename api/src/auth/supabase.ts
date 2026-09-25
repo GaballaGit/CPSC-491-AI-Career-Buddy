@@ -1,4 +1,8 @@
-import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
+import {
+  createClient,
+  type SupabaseClient,
+  type User,
+} from "@supabase/supabase-js";
 
 let authClient: SupabaseClient | null = null;
 
@@ -24,7 +28,9 @@ export function getSupabaseAuthClient(): SupabaseClient {
   return authClient;
 }
 
-export async function getUserFromAccessToken(token: string): Promise<User | null> {
+export async function getUserFromAccessToken(
+  token: string,
+): Promise<User | null> {
   if (process.env.SUPABASE_AUTH_TEST_USERS) {
     const users = JSON.parse(process.env.SUPABASE_AUTH_TEST_USERS) as Record<
       string,
