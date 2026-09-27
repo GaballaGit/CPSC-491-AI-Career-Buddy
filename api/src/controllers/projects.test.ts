@@ -1,19 +1,14 @@
-import { getSession } from "@auth/express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { getUserFromAccessToken } from "../auth/supabase.js";
 import { app } from "../app.js";
 import { projectRepository } from "../database/projectRepository.js";
 import type { Project } from "../entities/project.js";
 
-vi.mock("@auth/express", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@auth/express")>();
-
-  return {
-    ...actual,
-    getSession: vi.fn(),
-  };
-});
+vi.mock("../auth/supabase.js", () => ({
+  getUserFromAccessToken: vi.fn(),
+}));
 
 vi.mock("../database/projectRepository.js", () => ({
   projectRepository: {
@@ -28,6 +23,7 @@ vi.mock("../database/projectRepository.js", () => ({
 }));
 
 const userId = "11111111-1111-1111-1111-111111111111";
+const authHeader = { Authorization: "Bearer test-token" };
 
 const sampleProject: Project = {
   id: "22222222-2222-2222-2222-222222222222",
@@ -45,12 +41,13 @@ describe("Project creation and retrieval", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(getSession).mockResolvedValue({
-      user: {
-        id: userId,
-        email: "project-test@example.com",
-      },
-      expires: "2099-01-01T00:00:00.000Z",
+    vi.mocked(getUserFromAccessToken).mockResolvedValue({
+      id: userId,
+      email: "project-test@example.com",
+      app_metadata: {},
+      user_metadata: {},
+      aud: "authenticated",
+      created_at: "2026-09-17T20:00:00.000Z",
     });
   });
 
@@ -60,6 +57,7 @@ describe("Project creation and retrieval", () => {
 
       const response = await request(app)
         .post("/api/projects")
+        .set(authHeader)
         .send({
           title: "CareerLM",
           description: "AI-powered career coaching platform",
@@ -81,10 +79,11 @@ describe("Project creation and retrieval", () => {
     });
 
     it("rejects an unauthenticated request", async () => {
-      vi.mocked(getSession).mockResolvedValueOnce(null);
+      vi.mocked(getUserFromAccessToken).mockResolvedValueOnce(null);
 
       const response = await request(app)
         .post("/api/projects")
+        .set(authHeader)
         .send({
           title: "CareerLM",
           description: "AI-powered career coaching platform",
@@ -101,6 +100,7 @@ describe("Project creation and retrieval", () => {
     it("rejects invalid project data", async () => {
       const response = await request(app)
         .post("/api/projects")
+        .set(authHeader)
         .send({
           title: "",
           description: "Test project",
@@ -121,7 +121,7 @@ describe("Project creation and retrieval", () => {
         sampleProject,
       ]);
 
-      const response = await request(app).get("/api/projects");
+      const response = await request(app).get("/api/projects").set(authHeader);
 
       expect(response.status).toBe(200);
       expect(response.body.data).toEqual([sampleProject]);
@@ -132,7 +132,7 @@ describe("Project creation and retrieval", () => {
     it("returns an empty array when the user has no projects", async () => {
       vi.mocked(projectRepository.findByUser).mockResolvedValue([]);
 
-      const response = await request(app).get("/api/projects");
+      const response = await request(app).get("/api/projects").set(authHeader);
 
       expect(response.status).toBe(200);
       expect(response.body.data).toEqual([]);
@@ -141,9 +141,9 @@ describe("Project creation and retrieval", () => {
     });
 
     it("rejects an unauthenticated request", async () => {
-      vi.mocked(getSession).mockResolvedValueOnce(null);
+      vi.mocked(getUserFromAccessToken).mockResolvedValueOnce(null);
 
-      const response = await request(app).get("/api/projects");
+      const response = await request(app).get("/api/projects").set(authHeader);
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -157,9 +157,9 @@ describe("Project creation and retrieval", () => {
     it("returns one project owned by the authenticated user", async () => {
       vi.mocked(projectRepository.findById).mockResolvedValue(sampleProject);
 
-      const response = await request(app).get(
-        `/api/projects/${sampleProject.id}`,
-      );
+      const response = await request(app)
+        .get(`/api/projects/${sampleProject.id}`)
+        .set(authHeader);
 
       expect(response.status).toBe(200);
       expect(response.body.data).toEqual(sampleProject);
@@ -173,9 +173,9 @@ describe("Project creation and retrieval", () => {
     it("returns 404 when the project cannot be found for the user", async () => {
       vi.mocked(projectRepository.findById).mockResolvedValue(null);
 
-      const response = await request(app).get(
-        "/api/projects/33333333-3333-3333-3333-333333333333",
-      );
+      const response = await request(app)
+        .get("/api/projects/33333333-3333-3333-3333-333333333333")
+        .set(authHeader);
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);

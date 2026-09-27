@@ -1,3 +1,5 @@
+import { authHeaders } from "./auth";
+
 export type ProjectStatus = "in_progress" | "completed";
 
 export interface CreateProjectInput {
@@ -40,12 +42,7 @@ interface ApiErrorResponse {
   };
 }
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "";
-
-const DEV_AUTH_TOKEN =
-  process.env.NEXT_PUBLIC_DEV_AUTH_TOKEN ??
-  "dev_11111111-1111-1111-1111-111111111111";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 /**
  * Create a new project for the authenticated user.
@@ -57,7 +54,7 @@ export async function createProject(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${DEV_AUTH_TOKEN}`,
+      ...(await authHeaders()),
     },
     body: JSON.stringify(input),
   });
@@ -84,9 +81,7 @@ export async function createProject(
 export async function getProjects(): Promise<Project[]> {
   const response = await fetch(`${API_URL}/api/projects`, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${DEV_AUTH_TOKEN}`,
-    },
+    headers: await authHeaders(),
     cache: "no-store",
   });
 

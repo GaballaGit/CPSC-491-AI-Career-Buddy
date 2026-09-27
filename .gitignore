@@ -35,4 +35,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# build output
 dist/
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
