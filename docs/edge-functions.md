@@ -39,6 +39,7 @@ Folders that start with `_` are never deployed as functions.
 
 - `unpdf` works in Deno as-is.
 - `mammoth` does **not** accept `{ arrayBuffer }` in Deno ("Could not find file in options"). Pass `{ buffer: Buffer.from(bytes) }` with `Buffer` from `node:buffer`.
+- `mammoth` 1.13.0 fails in Deno (`ExternalPromise.resolve is not a function`). It is pinned to `~1.12.3`.
 
 ## Run locally
 

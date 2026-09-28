@@ -1,6 +1,6 @@
 /** Resume text extraction for Edge Functions: PDF or DOCX to plain text. */
 import { Buffer } from "node:buffer";
-import mammoth from "npm:mammoth@^1.12.2";
+import mammoth from "npm:mammoth@~1.12.3";
 import { extractText, getDocumentProxy } from "npm:unpdf@^1.8.1";
 
 import { HttpError } from "../http.ts";
