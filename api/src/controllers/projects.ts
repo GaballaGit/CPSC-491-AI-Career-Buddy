@@ -9,6 +9,7 @@ import type {
   UpdateProjectDto,
 } from "../entities/project.js";
 import { AuthenticationError } from "../errors/index.js";
+import { normalizeSkills } from "../utils/skills.js";
 
 /**
  * Allowed project lifecycle statuses.
@@ -145,7 +146,9 @@ function validateCreateProject(body: unknown):
   const dto: CreateProjectDto = {
     title,
     description,
-    skills_demonstrated: input.skills_demonstrated.map((skill) => skill.trim()),
+    skills_demonstrated: normalizeSkills(input.skills_demonstrated).map(
+      (skill) => skill.name,
+    ),
   };
 
   if (input.project_urls !== undefined) {
@@ -255,8 +258,8 @@ function validateUpdateProject(body: unknown):
       };
     }
 
-    dto.skills_demonstrated = input.skills_demonstrated.map((skill) =>
-      skill.trim(),
+    dto.skills_demonstrated = normalizeSkills(input.skills_demonstrated).map(
+      (skill) => skill.name,
     );
   }
 
