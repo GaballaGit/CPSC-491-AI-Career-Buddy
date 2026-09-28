@@ -10,8 +10,11 @@ supabase/
   functions/
     _shared/                   code shared by functions (not deployed on its own)
       http.ts                  response envelope, HttpError, CORS headers
+      auth.ts                  current user from the JWT + user-scoped client
       resume/
         extract.ts             PDF/DOCX -> text
+        skills.ts              text -> skills (shared skill contract)
+        repository.ts          resume_skills table
         validate.ts            upload checks (type, size)
         fixtures/              sample files used by tests
     resume/
@@ -35,11 +38,14 @@ Folders that start with `_` are never deployed as functions.
 
 `verify_jwt = true` in `config.toml`: the Supabase gateway rejects requests without a valid JWT (anon key or a signed-in user's token) before the function runs. Call functions from the frontend with `supabase.functions.invoke()`, which sends the token for you.
 
+The anon key alone is not a user. Use `authenticate(req)` from `_shared/auth.ts`: it returns `{ userId, db }` for a signed-in user or `null` (return 401). `db` sends the user's token, so Row Level Security limits every query to that user's rows. Handlers take `authenticate` and the store as dependencies so tests can pass fakes.
+
 ## Runtime notes
 
 - `unpdf` works in Deno as-is.
 - `mammoth` does **not** accept `{ arrayBuffer }` in Deno ("Could not find file in options"). Pass `{ buffer: Buffer.from(bytes) }` with `Buffer` from `node:buffer`.
-- `mammoth` 1.13.0 fails in Deno (`ExternalPromise.resolve is not a function`). It is pinned to `~1.12.3`.
+- `mammoth` 1.13.0 fails in Deno (`ExternalPromise.resolve is not a function`). It is pinned to exactly `1.12.3`; upgrade only for a security fix, and run the tests first.
+- `api/src/utils/skills.ts` has no imports, so functions import it by relative path.
 
 ## Run locally
 
@@ -57,4 +63,5 @@ deno lint supabase/functions
 
 | Route | Function | Status |
 |---|---|---|
-| `POST /api/resumes` | `resume` | Migrated. Express route deprecated; frontend switches after C40CS-15 deploys the function. |
+| `POST /api/resumes` | `POST /resume` | Migrated. Express route deprecated; frontend switches after C40CS-15 deploys the function. |
+| — | `GET /resume/skills` | New in C40CS-12: current user's saved resume skills. |

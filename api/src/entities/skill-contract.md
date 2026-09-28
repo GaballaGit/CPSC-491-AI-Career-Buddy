@@ -34,7 +34,7 @@ Storage formats do not change. Skills are stored as plain strings and turned int
 | Subsystem      | Stored as                                        | Normalize with                                          |
 | -------------- | ------------------------------------------------ | ------------------------------------------------------- |
 | Career Profile | `career_profiles.skills` (text[], display names) | `normalizeSkills` on save (done in C40CS-6)             |
-| Resume         | resume-derived skills (C40CS-12)                 | `normalizeSkills` on extracted candidates               |
+| Resume         | `resume_skills.skills` (text[], display names)   | `normalizeSkills` on extracted candidates (C40CS-12)    |
 | Jobs           | `job_required_skills.skill` (lowercase)          | `normalizeSkill(name)` then compare by `key` (C40CS-17) |
 | Portfolio      | `projects.skills_demonstrated` (text[])          | `normalizeSkills` on create/update (C40CS-23)           |
 
