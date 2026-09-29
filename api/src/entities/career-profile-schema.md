@@ -66,7 +66,7 @@ The API uses the snake_case column names (matching `CreateCareerProfileDto` and 
 
 ### 3.1 `POST /api/career-profile` (KAN-4)
 
-Requires an authenticated session. Creates the current user's Career Profile, or replaces it if one already exists (one profile per user).
+Requires an authenticated session. Creates the current user's Career Profile, or replaces it if one already exists (one profile per user). This same upsert is what the profile edit flow (`/profile/edit`, C40CS-8) calls to save changes — there is no separate update endpoint.
 
 Request body:
 
