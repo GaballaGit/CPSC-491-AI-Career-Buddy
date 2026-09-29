@@ -3,6 +3,7 @@ import type {
   LearningPreference,
   OnboardingFormData,
 } from "../app/onboarding/types";
+import { authHeaders } from "./auth";
 
 export interface CareerProfile {
   id: string;
@@ -27,14 +28,22 @@ export class ApiError extends Error {
   }
 }
 
-// Same-origin path: next.config.ts proxies /api to the Express server, and the
-// browser sends the Auth.js session cookie with it.
+// Same-origin path: next.config.ts proxies /api to the Express server.
 const ENDPOINT = "/api/career-profile";
 
 async function request<T>(init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  for (const [key, value] of Object.entries(await authHeaders())) {
+    headers.set(key, value);
+  }
+
   let response: Response;
   try {
-    response = await fetch(ENDPOINT, { cache: "no-store", ...init });
+    response = await fetch(ENDPOINT, {
+      cache: "no-store",
+      ...init,
+      headers,
+    });
   } catch {
     throw new ApiError("Could not reach the server.", 0);
   }
@@ -71,4 +80,4 @@ export function saveCareerProfile(
   });
 }
 
-export const SIGN_IN_URL = "/api/auth/signin";
+export const SIGN_IN_URL = "/signin";

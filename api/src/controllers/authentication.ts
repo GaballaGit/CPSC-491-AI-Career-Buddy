@@ -1,45 +1,16 @@
-/** HTTP controller for account creation and authentication-related requests. */
+/** HTTP controller for authentication-related requests. */
 import type { RequestHandler } from "express";
-import validator from "validator";
 
-import {
-  AppError,
-  AuthenticationError,
-  ValidationError,
-} from "../errors/index.js";
-import { createAccount } from "../auth/store.js";
+import { AuthenticationError, AppError } from "../errors/index.js";
 
-function credentials(req: Parameters<RequestHandler>[0]) {
-  const { email, password, name } = req.body ?? {};
-  if (
-    typeof email !== "string" ||
-    !validator.isEmail(email) ||
-    typeof password !== "string" ||
-    !validator.isLength(password, { min: 8 })
-  ) {
-    throw new ValidationError(
-      "A valid email and password of at least 8 characters are required.",
-    );
-  }
-  return {
-    email,
-    password,
-    name: typeof name === "string" ? name.trim() : undefined,
-  };
-}
-
-export const signUp: RequestHandler = (req, res, next) => {
-  try {
-    const { email, password, name } = credentials(req);
-    const user = createAccount(email, password, name);
-    res.status(201).json({ success: true, data: { user } });
-  } catch (error) {
-    next(
-      error instanceof Error && error.message.includes("already exists")
-        ? new AppError(error.message, 409, "VALIDATION_ERROR")
-        : error,
-    );
-  }
+export const signUp: RequestHandler = (_req, _res, next) => {
+  next(
+    new AppError(
+      "Sign up is handled by Supabase Auth. Use the frontend Supabase client instead.",
+      410,
+      "RESOURCE_NOT_FOUND",
+    ),
+  );
 };
 
 export const getCurrentUser: RequestHandler = (req, res, next) => {
