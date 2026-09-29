@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { authHeaders } from "../../lib/auth";
 import type { ResumeUploadData, ResumeUploadResponse } from "./types";
 
 // Display - Turn raw bytes into something readable
@@ -45,6 +46,7 @@ export default function ResumePage() {
 
       const response = await fetch("/api/resumes", {
         method: "POST",
+        headers: await authHeaders(),
         body: formData,
       });
       const body: ResumeUploadResponse = await response.json();
@@ -54,8 +56,12 @@ export default function ResumePage() {
       } else {
         setError(body.error.details?.[0]?.message ?? body.error.message);
       }
-    } catch {
-      setError("Could not reach the server. Make sure the API is running.");
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Could not reach the server. Make sure the API is running.",
+      );
     } finally {
       setUploading(false);
     }

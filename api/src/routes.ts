@@ -39,4 +39,9 @@ router.get("/projects/:id", requireAuthentication, getProject);
 router.patch("/projects/:id", requireAuthentication, updateProject);
 router.delete("/projects/:id", requireAuthentication, deleteProject);
 
-router.post("/resumes", upload.single("file"), uploadResume);
+router.post(
+  "/resumes",
+  requireAuthentication,
+  upload.single("file"),
+  uploadResume,
+);
