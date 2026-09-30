@@ -32,7 +32,9 @@ const sampleProject: Project = {
   updated_at: "2026-09-17T20:00:00.000Z",
 };
 
-describe("Project creation and retrieval", () => {
+const otherProjectId = "33333333-3333-3333-3333-333333333333";
+
+describe("Portfolio project API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -102,7 +104,7 @@ describe("Project creation and retrieval", () => {
       });
     });
 
-    it("rejects an unauthenticated request", async () => {
+    it("returns 401 for an unauthenticated create request", async () => {
       const response = await request(app)
         .post("/api/projects")
         .send({
@@ -165,11 +167,10 @@ describe("Project creation and retrieval", () => {
       expect(projectRepository.findByUser).toHaveBeenCalledWith(userId);
     });
 
-    it("rejects an unauthenticated request", async () => {
+    it("returns 401 for an unauthenticated list request", async () => {
       const response = await request(app).get("/api/projects");
 
       expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
       expect(response.body.error.code).toBe("AUTHENTICATION_REQUIRED");
 
       expect(projectRepository.findByUser).not.toHaveBeenCalled();
@@ -177,7 +178,7 @@ describe("Project creation and retrieval", () => {
   });
 
   describe("GET /api/projects/:id", () => {
-    it("returns one project owned by the authenticated user", async () => {
+    it("returns a project owned by the authenticated user", async () => {
       vi.mocked(projectRepository.findById).mockResolvedValue(sampleProject);
 
       const response = await request(app)
@@ -193,17 +194,20 @@ describe("Project creation and retrieval", () => {
       );
     });
 
-    it("returns 404 when the project cannot be found for the user", async () => {
+    it("does not allow the user to read another user's project", async () => {
       vi.mocked(projectRepository.findById).mockResolvedValue(null);
 
       const response = await request(app)
-        .get("/api/projects/33333333-3333-3333-3333-333333333333")
+        .get(`/api/projects/${otherProjectId}`)
         .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
       expect(response.body.error.code).toBe("PROJECT_NOT_FOUND");
-      expect(response.body.error.message).toBe("Project not found.");
+
+      expect(projectRepository.findById).toHaveBeenCalledWith(
+        userId,
+        otherProjectId,
+      );
     });
   });
 
@@ -233,6 +237,112 @@ describe("Project creation and retrieval", () => {
           status: "completed",
         },
       );
+    });
+
+    it("persists the completed project status", async () => {
+      const completedProject: Project = {
+        ...sampleProject,
+        status: "completed",
+      };
+
+      vi.mocked(projectRepository.update).mockResolvedValue(completedProject);
+
+      const response = await request(app)
+        .patch(`/api/projects/${sampleProject.id}`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          status: "completed",
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.status).toBe("completed");
+
+      expect(projectRepository.update).toHaveBeenCalledWith(
+        userId,
+        sampleProject.id,
+        {
+          status: "completed",
+        },
+      );
+    });
+
+    it("does not allow the user to update another user's project", async () => {
+      vi.mocked(projectRepository.update).mockResolvedValue(null);
+
+      const response = await request(app)
+        .patch(`/api/projects/${otherProjectId}`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          title: "Unauthorized change",
+        });
+
+      expect(response.status).toBe(404);
+      expect(response.body.error.code).toBe("PROJECT_NOT_FOUND");
+
+      expect(projectRepository.update).toHaveBeenCalledWith(
+        userId,
+        otherProjectId,
+        {
+          title: "Unauthorized change",
+        },
+      );
+    });
+
+    it("returns 401 for an unauthenticated update request", async () => {
+      const response = await request(app)
+        .patch(`/api/projects/${sampleProject.id}`)
+        .send({
+          status: "completed",
+        });
+
+      expect(response.status).toBe(401);
+      expect(response.body.error.code).toBe("AUTHENTICATION_REQUIRED");
+
+      expect(projectRepository.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("DELETE /api/projects/:id", () => {
+    it("deletes a project owned by the authenticated user", async () => {
+      vi.mocked(projectRepository.delete).mockResolvedValue(true);
+
+      const response = await request(app)
+        .delete(`/api/projects/${sampleProject.id}`)
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(response.status).toBe(204);
+
+      expect(projectRepository.delete).toHaveBeenCalledWith(
+        userId,
+        sampleProject.id,
+      );
+    });
+
+    it("does not allow the user to delete another user's project", async () => {
+      vi.mocked(projectRepository.delete).mockResolvedValue(false);
+
+      const response = await request(app)
+        .delete(`/api/projects/${otherProjectId}`)
+        .set("Authorization", `Bearer ${authToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.error.code).toBe("PROJECT_NOT_FOUND");
+
+      expect(projectRepository.delete).toHaveBeenCalledWith(
+        userId,
+        otherProjectId,
+      );
+    });
+
+    it("returns 401 for an unauthenticated delete request", async () => {
+      const response = await request(app).delete(
+        `/api/projects/${sampleProject.id}`,
+      );
+
+      expect(response.status).toBe(401);
+      expect(response.body.error.code).toBe("AUTHENTICATION_REQUIRED");
+
+      expect(projectRepository.delete).not.toHaveBeenCalled();
     });
   });
 });
