@@ -34,9 +34,9 @@ function fakeDeps(signedInAs: string | null) {
       Promise.resolve(
         signedInAs
           ? ({
-              userId: signedInAs,
-              db: null,
-            } as unknown as AuthContext)
+            userId: signedInAs,
+            db: null,
+          } as unknown as AuthContext)
           : null,
       ),
 
@@ -57,8 +57,7 @@ async function upload(
 ): Promise<Response> {
   const form = new FormData();
 
-  const data =
-    bytes ?? (await Deno.readFile(new URL(name, fixtures)));
+  const data = bytes ?? (await Deno.readFile(new URL(name, fixtures)));
 
   form.append("file", new File([data], name));
 
