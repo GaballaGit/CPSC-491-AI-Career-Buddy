@@ -160,9 +160,17 @@ export default function ProfilePage() {
             </dd>
           </div>
         </dl>
-        <Link href="/roadmap" className={`mt-6 inline-block ${primaryButton}`}>
-          View Roadmap
-        </Link>
+        <div className="mt-6 flex gap-3">
+          <Link href="/profile/edit" className={primaryButton}>
+            Edit Profile
+          </Link>
+          <Link
+            href="/roadmap"
+            className="rounded-full border border-black/[.08] px-5 py-2.5 text-sm font-medium text-black dark:border-white/[.145] dark:text-zinc-50"
+          >
+            View Roadmap
+          </Link>
+        </div>
       </div>
     </div>
   );
