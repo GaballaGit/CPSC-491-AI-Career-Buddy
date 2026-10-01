@@ -30,7 +30,16 @@ export default function SignInPage() {
       return;
     }
 
-    router.push("/dashboard");
+    const callbackUrl = new URLSearchParams(window.location.search).get(
+      "callbackUrl",
+    );
+
+    const destination =
+      callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//")
+        ? callbackUrl
+        : "/dashboard";
+
+    router.push(destination);
   }
 
   return (
@@ -42,6 +51,7 @@ export default function SignInPage() {
         <h1 className="text-2xl font-semibold text-black dark:text-zinc-50">
           Sign in
         </h1>
+
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
           Use your Career Buddy account.
         </p>
@@ -79,7 +89,10 @@ export default function SignInPage() {
         </button>
 
         <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-          No account? <Link className="underline" href="/signup">Sign up</Link>
+          No account?{" "}
+          <Link className="underline" href="/signup">
+            Sign up
+          </Link>
         </p>
       </form>
     </main>
