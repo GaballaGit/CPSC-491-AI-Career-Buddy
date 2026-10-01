@@ -1,4 +1,7 @@
-/** Resume function: upload (POST /resume) and saved skills (GET /resume/skills). */
+/** Resume function: upload (POST /resume), saved skills (GET /resume/skills),
+ * and deployment health verification (GET /resume/health).
+ */
+
 import { type AuthContext, authenticate } from "../_shared/auth.ts";
 import { corsHeaders, fail, HttpError, ok } from "../_shared/http.ts";
 import { extractResumeText } from "../_shared/resume/extract.ts";
@@ -19,9 +22,19 @@ const defaultDeps: ResumeDeps = {
   store: (auth) => supabaseResumeSkillStore(auth.db),
 };
 
+// Public health response used by post-deployment smoke checks.
+// Keep this intentionally small and free of secrets or environment details.
+function health(): Response {
+  return ok({
+    status: "ok",
+    service: "resume",
+  });
+}
+
 // Sign-in Check - 401 when there is no real user
 async function requireUser(req: Request, deps: ResumeDeps) {
   const auth = await deps.authenticate(req);
+
   if (!auth) {
     throw new HttpError(
       401,
@@ -29,14 +42,22 @@ async function requireUser(req: Request, deps: ResumeDeps) {
       "Sign in to use resume features.",
     );
   }
-  return { userId: auth.userId, store: deps.store(auth) };
+
+  return {
+    userId: auth.userId,
+    store: deps.store(auth),
+  };
 }
 
 // Upload - Validate, extract text and skills, save for this user
-async function upload(req: Request, deps: ResumeDeps): Promise<Response> {
+async function upload(
+  req: Request,
+  deps: ResumeDeps,
+): Promise<Response> {
   const { userId, store } = await requireUser(req, deps);
 
   let form: FormData;
+
   try {
     form = await req.formData();
   } catch {
@@ -64,33 +85,64 @@ async function upload(req: Request, deps: ResumeDeps): Promise<Response> {
 }
 
 // Saved Skills - Current user's latest resume skills
-async function savedSkills(req: Request, deps: ResumeDeps): Promise<Response> {
+async function savedSkills(
+  req: Request,
+  deps: ResumeDeps,
+): Promise<Response> {
   const { userId, store } = await requireUser(req, deps);
+
   const saved = await store.load(userId);
-  return ok(saved ?? { filename: null, skills: [], updatedAt: null });
+
+  return ok(
+    saved ?? {
+      filename: null,
+      skills: [],
+      updatedAt: null,
+    },
+  );
 }
 
-export function createResumeHandler(deps: ResumeDeps = defaultDeps) {
+export function createResumeHandler(
+  deps: ResumeDeps = defaultDeps,
+) {
   return async (req: Request): Promise<Response> => {
     // Preflight - CORS
     if (req.method === "OPTIONS") {
-      return new Response("ok", { headers: corsHeaders });
+      return new Response("ok", {
+        headers: corsHeaders,
+      });
     }
 
     try {
       const path = new URL(req.url).pathname;
 
-      if (req.method === "POST" && !path.endsWith("/skills")) {
+      // Public deployment health endpoint.
+      // This intentionally requires no authentication.
+      if (
+        req.method === "GET" &&
+        path.endsWith("/health")
+      ) {
+        return health();
+      }
+
+      if (
+        req.method === "POST" &&
+        !path.endsWith("/skills")
+      ) {
         return await upload(req, deps);
       }
-      if (req.method === "GET" && path.endsWith("/skills")) {
+
+      if (
+        req.method === "GET" &&
+        path.endsWith("/skills")
+      ) {
         return await savedSkills(req, deps);
       }
 
       throw new HttpError(
         405,
         "INVALID_REQUEST",
-        "Use POST /resume to upload or GET /resume/skills to read skills.",
+        "Use POST /resume to upload, GET /resume/skills to read skills, or GET /resume/health for health verification.",
       );
     } catch (error) {
       return fail(error);
