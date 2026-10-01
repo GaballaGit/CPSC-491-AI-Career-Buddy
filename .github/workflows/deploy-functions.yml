@@ -45,6 +45,53 @@ jobs:
       - name: Deploy functions
         run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF" --use-api
 
+      - name: Verify Resume function health
+        shell: bash
+        run: |
+          HEALTH_URL="https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/resume/health"
+
+          echo "Checking deployed Resume function health..."
+
+          for attempt in 1 2 3 4 5; do
+            echo "Health check attempt ${attempt}/5"
+
+            RESPONSE_FILE="$(mktemp)"
+
+            if curl \
+              --fail \
+              --silent \
+              --show-error \
+              --location \
+              --max-time 15 \
+              --output "$RESPONSE_FILE" \
+              "$HEALTH_URL"; then
+
+              echo "Health endpoint responded successfully."
+
+              if grep -q '"status":"ok"' "$RESPONSE_FILE" && \
+                 grep -q '"service":"resume"' "$RESPONSE_FILE"; then
+                echo "Resume function health verification passed."
+                rm -f "$RESPONSE_FILE"
+                exit 0
+              fi
+
+              echo "Health endpoint returned an unexpected response."
+              cat "$RESPONSE_FILE"
+            else
+              echo "Health endpoint was not reachable."
+            fi
+
+            rm -f "$RESPONSE_FILE"
+
+            if [ "$attempt" -lt 5 ]; then
+              echo "Retrying in 5 seconds..."
+              sleep 5
+            fi
+          done
+
+          echo "::error::Deployed Resume function failed health verification."
+          exit 1
+
       - name: List deployed functions
         run: supabase functions list --project-ref "$SUPABASE_PROJECT_REF"
 
@@ -55,4 +102,5 @@ jobs:
             echo ""
             echo "- Version: \`${{ steps.version.outputs.value }}\`"
             echo "- Commit: \`${GITHUB_SHA}\`"
+            echo "- Resume health check: passed"
           } >> "$GITHUB_STEP_SUMMARY"

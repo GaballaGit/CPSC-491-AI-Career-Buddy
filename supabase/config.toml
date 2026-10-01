@@ -416,7 +416,7 @@ enabled = true
 
 [functions.resume]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/resume/deno.json"
 # Uncomment to specify a custom file path to the entrypoint.
 # Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
