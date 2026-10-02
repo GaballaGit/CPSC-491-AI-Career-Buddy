@@ -39,5 +39,9 @@ router.get("/projects/:id", requireAuthentication, getProject);
 router.patch("/projects/:id", requireAuthentication, updateProject);
 router.delete("/projects/:id", requireAuthentication, deleteProject);
 
-// Deprecated - Replaced by the resume Edge Function (C40CS-11); remove after C40CS-15 deploys it
-router.post("/resumes", upload.single("file"), uploadResume);
+router.post(
+  "/resumes",
+  requireAuthentication,
+  upload.single("file"),
+  uploadResume,
+);
