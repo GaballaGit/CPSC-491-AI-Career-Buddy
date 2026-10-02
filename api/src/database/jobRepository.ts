@@ -28,7 +28,7 @@ class JobRepository {
 
   findAll(): Job[] {
     return [...this.jobs.values()].sort((a, b) =>
-      a.title.localeCompare(b.title),
+      a.title.localeCompare(b.title)
     );
   }
 
@@ -39,7 +39,7 @@ class JobRepository {
   findByRequiredSkill(skill: string): Job[] {
     const normalized = skill.trim().toLowerCase();
     return this.findAll().filter((job) =>
-      job.required_skills.some((required) => required.name === normalized),
+      job.required_skills.some((required) => required.name === normalized)
     );
   }
 

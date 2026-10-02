@@ -1,7 +1,7 @@
 /** HTTP controller for authentication-related requests. */
 import type { RequestHandler } from "express";
 
-import { AuthenticationError, AppError } from "../errors/index.js";
+import { AppError, AuthenticationError } from "../errors/index.js";
 
 export const signUp: RequestHandler = (_req, _res, next) => {
   next(

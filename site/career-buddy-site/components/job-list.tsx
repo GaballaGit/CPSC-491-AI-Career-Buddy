@@ -31,7 +31,7 @@ export default function JobList() {
       .catch((reason: unknown) =>
         setError(
           reason instanceof Error ? reason.message : "Unable to load jobs.",
-        ),
+        )
       )
       .finally(() => setLoading(false));
   }, [category]);
@@ -62,14 +62,14 @@ export default function JobList() {
       {loading && <p className="notice">Loading available roles…</p>}
       {!loading && !error && matchStatus === "signed_out" && (
         <p className="notice prompt">
-          <Link href="/signin">Sign in</Link> to see how well each role matches
-          your skills.
+          <Link href="/signin">Sign in</Link>{" "}
+          to see how well each role matches your skills.
         </p>
       )}
       {!loading && !error && matchStatus === "profile_missing" && (
         <p className="notice prompt">
-          <Link href="/onboarding">Complete onboarding</Link> to unlock your
-          personalized job match scores.
+          <Link href="/onboarding">Complete onboarding</Link>{" "}
+          to unlock your personalized job match scores.
         </p>
       )}
       {!loading && !error && !jobs.length && (

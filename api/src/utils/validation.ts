@@ -54,7 +54,9 @@ export function validateResumeFile(
     throw new ValidationError("Unsupported file type.", [
       {
         field: "file",
-        message: `Only ${RESUME_ALLOWED_EXTENSIONS.join(" and ")} files are accepted.`,
+        message: `Only ${
+          RESUME_ALLOWED_EXTENSIONS.join(" and ")
+        } files are accepted.`,
       },
     ]);
   }
@@ -92,7 +94,8 @@ export function validateCreateCareerProfile(
   } else if (targetCareer.trim().length > TARGET_CAREER_MAX_LENGTH) {
     errors.push({
       field: "target_career",
-      message: `target_career must be ${TARGET_CAREER_MAX_LENGTH} characters or fewer.`,
+      message:
+        `target_career must be ${TARGET_CAREER_MAX_LENGTH} characters or fewer.`,
     });
   }
 
@@ -100,7 +103,9 @@ export function validateCreateCareerProfile(
   if (!EXPERIENCE_LEVELS.includes(experienceLevel as ExperienceLevel)) {
     errors.push({
       field: "experience_level",
-      message: `experience_level must be one of: ${EXPERIENCE_LEVELS.join(", ")}.`,
+      message: `experience_level must be one of: ${
+        EXPERIENCE_LEVELS.join(", ")
+      }.`,
     });
   }
 
@@ -134,12 +139,14 @@ export function validateCreateCareerProfile(
     !Array.isArray(learningPreferences) ||
     learningPreferences.length === 0 ||
     !learningPreferences.every((pref) =>
-      LEARNING_PREFERENCES.includes(pref as LearningPreference),
+      LEARNING_PREFERENCES.includes(pref as LearningPreference)
     )
   ) {
     errors.push({
       field: "learning_preferences",
-      message: `learning_preferences must be a non-empty array of: ${LEARNING_PREFERENCES.join(", ")}.`,
+      message: `learning_preferences must be a non-empty array of: ${
+        LEARNING_PREFERENCES.join(", ")
+      }.`,
     });
   }
 
@@ -152,7 +159,8 @@ export function validateCreateCareerProfile(
   ) {
     errors.push({
       field: "weekly_availability_hours",
-      message: `weekly_availability_hours must be a whole number from ${MIN_WEEKLY_HOURS} to ${MAX_WEEKLY_HOURS}.`,
+      message:
+        `weekly_availability_hours must be a whole number from ${MIN_WEEKLY_HOURS} to ${MAX_WEEKLY_HOURS}.`,
     });
   }
 

@@ -32,8 +32,8 @@ function fakeDeps(profileSkills: string[] | null | undefined) {
     list(category) {
       const filtered = category
         ? jobs.filter(
-            (job) => job.category.toLowerCase() === category.toLowerCase(),
-          )
+          (job) => job.category.toLowerCase() === category.toLowerCase(),
+        )
         : jobs;
       return Promise.resolve(
         [...filtered].sort((a, b) => a.title.localeCompare(b.title)),

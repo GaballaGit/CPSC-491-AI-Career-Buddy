@@ -131,8 +131,9 @@ async function getJob(
 
 export function createJobsHandler(deps: JobsDeps = defaultDeps) {
   return async (req: Request): Promise<Response> => {
-    if (req.method === "OPTIONS")
+    if (req.method === "OPTIONS") {
       return new Response("ok", { headers: corsHeaders });
+    }
 
     try {
       if (req.method !== "GET") {

@@ -32,10 +32,9 @@ export function computeJobSkillMatch({
 
   const matched = required.filter((skill) => knownKeys.has(skill.key));
   const missing = required.filter((skill) => !knownKeys.has(skill.key));
-  const score =
-    required.length === 0
-      ? 100
-      : Math.round((matched.length / required.length) * 100);
+  const score = required.length === 0
+    ? 100
+    : Math.round((matched.length / required.length) * 100);
 
   return { matched, missing, score };
 }

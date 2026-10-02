@@ -258,8 +258,8 @@ function validateUpdateProject(body: unknown):
       };
     }
 
-    dto.skills_demonstrated = normalizeSkills(input.skills_demonstrated).map(
-      (skill) => skill.name,
+    dto.skills_demonstrated = input.skills_demonstrated.map((skill) =>
+      skill.trim(),
     );
   }
 

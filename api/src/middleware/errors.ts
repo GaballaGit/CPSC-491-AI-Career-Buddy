@@ -43,10 +43,9 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   } else if (isBodyParserError(error)) {
     statusCode = error.status;
     errorCode = "INVALID_REQUEST";
-    message =
-      error.type === "entity.parse.failed"
-        ? "Request body must be valid JSON."
-        : error.message;
+    message = error.type === "entity.parse.failed"
+      ? "Request body must be valid JSON."
+      : error.message;
   } else if (error instanceof Error) {
     message = error.message;
   }

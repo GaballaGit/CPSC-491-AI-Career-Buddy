@@ -3,10 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import {
-  getCareerProfile,
-  type CareerProfile,
-} from "../../lib/careerProfile";
+import { type CareerProfile, getCareerProfile } from "../../lib/careerProfile";
 import { getProjects } from "../../lib/projects";
 import { EXPERIENCE_LEVELS } from "../onboarding/options";
 import type { ExperienceLevel } from "../onboarding/types";
@@ -22,12 +19,9 @@ function experienceLabel(
 }
 
 export default function DashboardPage() {
-  const [profile, setProfile] =
-    useState<CareerProfile | null>(null);
-  const [profileLoading, setProfileLoading] =
-    useState(true);
-  const [profileUnavailable, setProfileUnavailable] =
-    useState(false);
+  const [profile, setProfile] = useState<CareerProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileUnavailable, setProfileUnavailable] = useState(false);
 
   useEffect(() => {
     async function loadProfile() {
@@ -46,15 +40,12 @@ export default function DashboardPage() {
   const profileStatus = profileLoading
     ? "Loading..."
     : profileUnavailable
-      ? "Unavailable"
-      : "Not set";
+    ? "Unavailable"
+    : "Not set";
 
-  const [projectCount, setProjectCount] =
-    useState<number | null>(null);
-  const [projectsLoading, setProjectsLoading] =
-    useState(true);
-  const [projectsUnavailable, setProjectsUnavailable] =
-    useState(false);
+  const [projectCount, setProjectCount] = useState<number | null>(null);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [projectsUnavailable, setProjectsUnavailable] = useState(false);
 
   useEffect(() => {
     async function loadProjectCount() {
@@ -84,8 +75,8 @@ export default function DashboardPage() {
           </h1>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-            Manage your career profile, portfolio projects,
-            and career-readiness tools from one place.
+            Manage your career profile, portfolio projects, and career-readiness
+            tools from one place.
           </p>
         </section>
 
@@ -121,8 +112,8 @@ export default function DashboardPage() {
               {profile
                 ? profile.skills.length
                 : profileLoading || profileUnavailable
-                  ? profileStatus
-                  : 0}
+                ? profileStatus
+                : 0}
             </p>
           </div>
 
@@ -135,8 +126,8 @@ export default function DashboardPage() {
               {projectsLoading
                 ? "Loading..."
                 : projectsUnavailable
-                  ? "Unavailable"
-                  : (projectCount ?? 0)}
+                ? "Unavailable"
+                : (projectCount ?? 0)}
             </p>
           </div>
         </section>
@@ -147,48 +138,48 @@ export default function DashboardPage() {
               Career Profile
             </h2>
 
-            {profile ? (
-              <div className="mt-3 flex-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                <p>
-                  Target:{" "}
-                  <span className="font-medium text-black dark:text-zinc-50">
-                    {profile.target_career}
-                  </span>
-                </p>
+            {profile
+              ? (
+                <div className="mt-3 flex-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                  <p>
+                    Target:{" "}
+                    <span className="font-medium text-black dark:text-zinc-50">
+                      {profile.target_career}
+                    </span>
+                  </p>
 
-                <p>
-                  Experience:{" "}
-                  <span className="font-medium text-black dark:text-zinc-50">
-                    {experienceLabel(
-                      profile.experience_level,
-                    )}
-                  </span>
-                </p>
+                  <p>
+                    Experience:{" "}
+                    <span className="font-medium text-black dark:text-zinc-50">
+                      {experienceLabel(
+                        profile.experience_level,
+                      )}
+                    </span>
+                  </p>
 
-                <p>
-                  Skills:{" "}
-                  <span className="font-medium text-black dark:text-zinc-50">
-                    {profile.skills.length}
-                  </span>
-                </p>
-              </div>
-            ) : (
-              <p className="mt-3 flex-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                {profileLoading
-                  ? "Loading your career profile..."
-                  : profileUnavailable
+                  <p>
+                    Skills:{" "}
+                    <span className="font-medium text-black dark:text-zinc-50">
+                      {profile.skills.length}
+                    </span>
+                  </p>
+                </div>
+              )
+              : (
+                <p className="mt-3 flex-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                  {profileLoading
+                    ? "Loading your career profile..."
+                    : profileUnavailable
                     ? "Career profile is currently unavailable."
                     : "Complete onboarding to create your career profile."}
-              </p>
-            )}
+                </p>
+              )}
 
             <Link
               href={profile ? "/profile" : "/onboarding"}
               className="mt-6 inline-flex w-fit rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-80"
             >
-              {profile
-                ? "View profile"
-                : "Start onboarding"}
+              {profile ? "View profile" : "Start onboarding"}
             </Link>
           </article>
 
@@ -198,25 +189,25 @@ export default function DashboardPage() {
             </h2>
 
             <div className="mt-3 flex-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-              {projectsLoading ? (
-                <p>Loading portfolio data...</p>
-              ) : projectsUnavailable ? (
-                <p>
-                  Project data is currently unavailable.
-                </p>
-              ) : (
-                <p>
-                  You have{" "}
-                  <span className="font-medium text-black dark:text-zinc-50">
-                    {projectCount ?? 0}
-                  </span>{" "}
-                  saved{" "}
-                  {(projectCount ?? 0) === 1
-                    ? "project"
-                    : "projects"}{" "}
-                  in your portfolio.
-                </p>
-              )}
+              {projectsLoading
+                ? <p>Loading portfolio data...</p>
+                : projectsUnavailable
+                ? (
+                  <p>
+                    Project data is currently unavailable.
+                  </p>
+                )
+                : (
+                  <p>
+                    You have{" "}
+                    <span className="font-medium text-black dark:text-zinc-50">
+                      {projectCount ?? 0}
+                    </span>{" "}
+                    saved {(projectCount ?? 0) === 1 ? "project" : "projects"}
+                    {" "}
+                    in your portfolio.
+                  </p>
+                )}
             </div>
 
             <Link
@@ -233,8 +224,8 @@ export default function DashboardPage() {
             </h2>
 
             <p className="mt-3 flex-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-              Add another project to your portfolio and
-              document the skills you used.
+              Add another project to your portfolio and document the skills you
+              used.
             </p>
 
             <Link
@@ -251,8 +242,7 @@ export default function DashboardPage() {
             </h2>
 
             <p className="mt-3 flex-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-              Resume analysis and career-readiness feedback
-              will appear here.
+              Resume analysis and career-readiness feedback will appear here.
             </p>
 
             <span className="mt-6 inline-flex w-fit rounded-full bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
@@ -266,8 +256,7 @@ export default function DashboardPage() {
             </h2>
 
             <p className="mt-3 flex-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-              Job matching and saved job opportunities will
-              appear here.
+              Job matching and saved job opportunities will appear here.
             </p>
 
             <span className="mt-6 inline-flex w-fit rounded-full bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
@@ -281,8 +270,7 @@ export default function DashboardPage() {
             </h2>
 
             <p className="mt-3 flex-1 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-              Your personalized career roadmap and progress
-              will appear here.
+              Your personalized career roadmap and progress will appear here.
             </p>
 
             <span className="mt-6 inline-flex w-fit rounded-full bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
@@ -297,8 +285,8 @@ export default function DashboardPage() {
           </h2>
 
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Continue building your career profile or add
-            another portfolio project.
+            Continue building your career profile or add another portfolio
+            project.
           </p>
 
           <div className="mt-5 flex flex-wrap gap-3">

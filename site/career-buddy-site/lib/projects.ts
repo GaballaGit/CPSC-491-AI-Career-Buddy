@@ -64,10 +64,9 @@ export async function createProject(
     | ApiErrorResponse;
 
   if (!response.ok || !payload.success) {
-    const message =
-      "error" in payload
-        ? payload.error.message
-        : "Unable to create project.";
+    const message = "error" in payload
+      ? payload.error.message
+      : "Unable to create project.";
 
     throw new Error(message);
   }
@@ -90,10 +89,9 @@ export async function getProjects(): Promise<Project[]> {
     | ApiErrorResponse;
 
   if (!response.ok || !payload.success) {
-    const message =
-      "error" in payload
-        ? payload.error.message
-        : "Unable to retrieve projects.";
+    const message = "error" in payload
+      ? payload.error.message
+      : "Unable to retrieve projects.";
 
     throw new Error(message);
   }

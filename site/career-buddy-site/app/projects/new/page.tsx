@@ -2,18 +2,14 @@
 
 import { FormEvent, useState } from "react";
 
-import {
-  createProject,
-  type ProjectStatus,
-} from "../../../lib/projects";
+import { createProject, type ProjectStatus } from "../../../lib/projects";
 
 export default function AddProjectPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [skills, setSkills] = useState("");
   const [urls, setUrls] = useState("");
-  const [status, setStatus] =
-    useState<ProjectStatus>("in_progress");
+  const [status, setStatus] = useState<ProjectStatus>("in_progress");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -59,9 +55,7 @@ export default function AddProjectPage() {
       setStatus("in_progress");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to create project.",
+        error instanceof Error ? error.message : "Unable to create project.",
       );
     } finally {
       setIsSubmitting(false);
@@ -96,9 +90,7 @@ export default function AddProjectPage() {
                 id="title"
                 type="text"
                 value={title}
-                onChange={(event) =>
-                  setTitle(event.target.value)
-                }
+                onChange={(event) => setTitle(event.target.value)}
                 minLength={3}
                 maxLength={100}
                 required
@@ -118,9 +110,7 @@ export default function AddProjectPage() {
               <textarea
                 id="description"
                 value={description}
-                onChange={(event) =>
-                  setDescription(event.target.value)
-                }
+                onChange={(event) => setDescription(event.target.value)}
                 required
                 rows={5}
                 className="rounded-lg border border-black/[.12] bg-white px-3 py-2 text-black outline-none focus:border-black dark:border-white/[.2] dark:bg-zinc-900 dark:text-zinc-50"
@@ -140,9 +130,7 @@ export default function AddProjectPage() {
                 id="skills"
                 type="text"
                 value={skills}
-                onChange={(event) =>
-                  setSkills(event.target.value)
-                }
+                onChange={(event) => setSkills(event.target.value)}
                 required
                 className="rounded-lg border border-black/[.12] bg-white px-3 py-2 text-black outline-none focus:border-black dark:border-white/[.2] dark:bg-zinc-900 dark:text-zinc-50"
                 placeholder="TypeScript, React, PostgreSQL"
@@ -165,9 +153,7 @@ export default function AddProjectPage() {
                 id="urls"
                 type="text"
                 value={urls}
-                onChange={(event) =>
-                  setUrls(event.target.value)
-                }
+                onChange={(event) => setUrls(event.target.value)}
                 className="rounded-lg border border-black/[.12] bg-white px-3 py-2 text-black outline-none focus:border-black dark:border-white/[.2] dark:bg-zinc-900 dark:text-zinc-50"
                 placeholder="https://github.com/..., https://example.com"
               />
@@ -191,8 +177,7 @@ export default function AddProjectPage() {
                 onChange={(event) =>
                   setStatus(
                     event.target.value as ProjectStatus,
-                  )
-                }
+                  )}
                 className="rounded-lg border border-black/[.12] bg-white px-3 py-2 text-black outline-none focus:border-black dark:border-white/[.2] dark:bg-zinc-900 dark:text-zinc-50"
               >
                 <option value="in_progress">
@@ -221,9 +206,7 @@ export default function AddProjectPage() {
               disabled={isSubmitting}
               className="rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSubmitting
-                ? "Creating project..."
-                : "Add project"}
+              {isSubmitting ? "Creating project..." : "Add project"}
             </button>
           </form>
         </div>
