@@ -65,3 +65,4 @@ deno lint supabase/functions
 |---|---|---|
 | `POST /api/resumes` | `POST /resume` | Migrated. Express route deprecated; frontend switches after C40CS-15 deploys the function. |
 | — | `GET /resume/skills` | New in C40CS-12: current user's saved resume skills. |
+| — | `POST /resume/feedback` | New in C40CS-14: structured AI feedback for `{ text, targetRole? }`. |

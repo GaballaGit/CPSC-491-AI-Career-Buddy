@@ -20,6 +20,15 @@ export interface SavedResumeSkills {
   updatedAt: string | null;
 }
 
+// AI Feedback - POST /resume/feedback; targetRole is null without a profile
+export interface ResumeFeedback {
+  strengths: string[];
+  weaknesses: string[];
+  missing_skills: string[];
+  suggestions: string[];
+  targetRole: string | null;
+}
+
 // Error Payload - Shared API error shape
 export interface ApiErrorPayload {
   code: string;

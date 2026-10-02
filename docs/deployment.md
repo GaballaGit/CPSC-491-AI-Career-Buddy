@@ -72,6 +72,7 @@ Access tokens expire. When the deploy fails with an auth error, generate a new t
 
 - Deploy credentials live only in GitHub repository secrets. Moving them to a protected `production` environment needs a repo admin and is follow-up work.
 - Runtime secrets for functions (e.g. an AI API key) are set in Supabase, not GitHub: `supabase secrets set NAME=value --project-ref <ref>`.
+- AI feedback (C40CS-14) reads `LLM_API_KEY`, `LLM_BASE_URL`, and `LLM_MODEL` from Supabase secrets. Any OpenAI-compatible provider works; we use NRP Managed LLMs (`https://ellm.nrp-nautilus.io/v1`, model `gpt-oss`). Without them, `POST /resume/feedback` returns `503 AI_NOT_CONFIGURED`.
 - `SUPABASE_URL` and `SUPABASE_ANON_KEY` are provided to functions by Supabase automatically.
 - Nothing secret goes in the repo, `.env.example` files, workflow logs, or health endpoint responses.
 
