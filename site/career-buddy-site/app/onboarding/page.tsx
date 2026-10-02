@@ -158,8 +158,7 @@ export default function OnboardingPage() {
                 update((prev) => ({
                   ...prev,
                   targetCareer: e.target.value,
-                }))
-              }
+                }))}
               placeholder="e.g. Frontend Engineer"
               className="rounded-lg border border-black/[.08] bg-transparent px-4 py-2.5 text-black outline-none focus:border-foreground dark:border-white/[.145] dark:text-zinc-50"
             />
@@ -190,8 +189,7 @@ export default function OnboardingPage() {
                       update((prev) => ({
                         ...prev,
                         experienceLevel: value,
-                      }))
-                    }
+                      }))}
                   />
                   <span className="text-black dark:text-zinc-50">{label}</span>
                 </label>
@@ -309,10 +307,10 @@ export default function OnboardingPage() {
               onChange={(e) =>
                 update((prev) => ({
                   ...prev,
-                  weeklyAvailabilityHours:
-                    e.target.value === "" ? "" : Number(e.target.value),
-                }))
-              }
+                  weeklyAvailabilityHours: e.target.value === ""
+                    ? ""
+                    : Number(e.target.value),
+                }))}
               placeholder="e.g. 10"
               className="rounded-lg border border-black/[.08] bg-transparent px-4 py-2.5 text-black outline-none focus:border-foreground dark:border-white/[.145] dark:text-zinc-50"
             />
@@ -333,31 +331,33 @@ export default function OnboardingPage() {
             role="alert"
             className="mt-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-200"
           >
-            {submitError.status === 401 ? (
-              <p>
-                You need to sign in to save your profile.{" "}
-                <a
-                  href={SIGN_IN_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium underline"
-                >
-                  Sign in
-                </a>{" "}
-                in a new tab, then press Finish again. Your answers are kept.
-              </p>
-            ) : (
-              <>
-                <p>Couldn&apos;t save your profile. {submitError.message}</p>
-                {submitError.details.length > 0 && (
-                  <ul className="mt-1 list-disc pl-5">
-                    {submitError.details.map((detail) => (
-                      <li key={detail.field}>{detail.message}</li>
-                    ))}
-                  </ul>
-                )}
-              </>
-            )}
+            {submitError.status === 401
+              ? (
+                <p>
+                  You need to sign in to save your profile.{" "}
+                  <a
+                    href={SIGN_IN_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium underline"
+                  >
+                    Sign in
+                  </a>{" "}
+                  in a new tab, then press Finish again. Your answers are kept.
+                </p>
+              )
+              : (
+                <>
+                  <p>Couldn&apos;t save your profile. {submitError.message}</p>
+                  {submitError.details.length > 0 && (
+                    <ul className="mt-1 list-disc pl-5">
+                      {submitError.details.map((detail) => (
+                        <li key={detail.field}>{detail.message}</li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
           </div>
         )}
 
@@ -370,24 +370,26 @@ export default function OnboardingPage() {
           >
             Back
           </button>
-          {isLastStep ? (
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background disabled:opacity-40"
-            >
-              {submitting ? "Submitting..." : "Finish"}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={goNext}
-              className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background disabled:opacity-40"
-            >
-              Next
-            </button>
-          )}
+          {isLastStep
+            ? (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background disabled:opacity-40"
+              >
+                {submitting ? "Submitting..." : "Finish"}
+              </button>
+            )
+            : (
+              <button
+                type="button"
+                onClick={goNext}
+                className="rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background disabled:opacity-40"
+              >
+                Next
+              </button>
+            )}
         </div>
       </div>
     </div>

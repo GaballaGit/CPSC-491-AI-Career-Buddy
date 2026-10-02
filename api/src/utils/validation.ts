@@ -54,7 +54,9 @@ export function validateResumeFile(
     throw new ValidationError("Unsupported file type.", [
       {
         field: "file",
-        message: `Only ${RESUME_ALLOWED_EXTENSIONS.join(" and ")} files are accepted.`,
+        message: `Only ${RESUME_ALLOWED_EXTENSIONS.join(
+          " and ",
+        )} files are accepted.`,
       },
     ]);
   }
@@ -100,7 +102,9 @@ export function validateCreateCareerProfile(
   if (!EXPERIENCE_LEVELS.includes(experienceLevel as ExperienceLevel)) {
     errors.push({
       field: "experience_level",
-      message: `experience_level must be one of: ${EXPERIENCE_LEVELS.join(", ")}.`,
+      message: `experience_level must be one of: ${EXPERIENCE_LEVELS.join(
+        ", ",
+      )}.`,
     });
   }
 
@@ -139,7 +143,9 @@ export function validateCreateCareerProfile(
   ) {
     errors.push({
       field: "learning_preferences",
-      message: `learning_preferences must be a non-empty array of: ${LEARNING_PREFERENCES.join(", ")}.`,
+      message: `learning_preferences must be a non-empty array of: ${LEARNING_PREFERENCES.join(
+        ", ",
+      )}.`,
     });
   }
 

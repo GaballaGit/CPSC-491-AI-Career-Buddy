@@ -42,16 +42,16 @@ export default function SkillsPanel(props: Props) {
 
       {props.state === "ready" && props.skills.length === 0 && (
         <div className="mt-4 rounded-xl border border-dashed border-zinc-300 bg-white px-5 py-6 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-          {props.filename ? (
-            <>
-              No skills found in{" "}
-              <span className="font-mono">{props.filename}</span>. Make sure
-              your resume lists tools and languages by name, for example in a
-              Skills section, then upload it again.
-            </>
-          ) : (
-            <>Upload your resume above to see the skills we find in it.</>
-          )}
+          {props.filename
+            ? (
+              <>
+                No skills found in{" "}
+                <span className="font-mono">{props.filename}</span>. Make sure
+                your resume lists tools and languages by name, for example in a
+                Skills section, then upload it again.
+              </>
+            )
+            : <>Upload your resume above to see the skills we find in it.</>}
         </div>
       )}
 

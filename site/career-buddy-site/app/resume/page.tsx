@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
-
+import type { ResumeUploadData, Skill } from "./types";
 import {
   getSavedResumeSkills,
   isSignedIn,
@@ -11,7 +10,7 @@ import {
 } from "../../lib/resume";
 import FeedbackPanel from "./feedback-panel";
 import SkillsPanel from "./skills-panel";
-import type { ResumeUploadData, Skill } from "./types";
+import Link from "next/link";
 
 // Display - Turn raw bytes into something readable
 function formatBytes(bytes: number): string {
@@ -154,14 +153,14 @@ export default function ResumePage() {
 
   const stats = result
     ? [
-        { label: "Characters", value: result.characters.toLocaleString() },
-        { label: "Words", value: countWords(result.text).toLocaleString() },
-        { label: "File size", value: formatBytes(result.sizeBytes) },
-        {
-          label: "Format",
-          value: getFileExtension(result.filename).toUpperCase() || "—",
-        },
-      ]
+      { label: "Characters", value: result.characters.toLocaleString() },
+      { label: "Words", value: countWords(result.text).toLocaleString() },
+      { label: "File size", value: formatBytes(result.sizeBytes) },
+      {
+        label: "Format",
+        value: result.filename.split(".").pop()?.toUpperCase() ?? "—",
+      },
+    ]
     : [];
 
   return (
@@ -260,41 +259,45 @@ export default function ResumePage() {
                     className="h-6 w-6"
                     aria-hidden="true"
                   >
-                    {file ? (
-                      <>
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <path d="M14 2v6h6" />
-                        <path d="m9 15 2 2 4-4" />
-                      </>
-                    ) : (
-                      <>
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <path d="m7 10 5-5 5 5" />
-                        <path d="M12 5v12" />
-                      </>
-                    )}
+                    {file
+                      ? (
+                        <>
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <path d="M14 2v6h6" />
+                          <path d="m9 15 2 2 4-4" />
+                        </>
+                      )
+                      : (
+                        <>
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <path d="m7 10 5-5 5 5" />
+                          <path d="M12 5v12" />
+                        </>
+                      )}
                   </svg>
                 </div>
 
-                {file ? (
-                  <>
-                    <p className="mt-4 font-mono text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                      {file.name}
-                    </p>
-                    <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-                      {formatBytes(file.size)} · click to choose another
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="mt-4 text-base font-medium text-zinc-900 dark:text-zinc-100">
-                      Drop a file here, or click to browse
-                    </p>
-                    <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-                      PDF or Word, up to 5 MB
-                    </p>
-                  </>
-                )}
+                {file
+                  ? (
+                    <>
+                      <p className="mt-4 font-mono text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                        {file.name}
+                      </p>
+                      <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                        {formatBytes(file.size)} · click to choose another
+                      </p>
+                    </>
+                  )
+                  : (
+                    <>
+                      <p className="mt-4 text-base font-medium text-zinc-900 dark:text-zinc-100">
+                        Drop a file here, or click to browse
+                      </p>
+                      <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                        PDF or Word, up to 5 MB
+                      </p>
+                    </>
+                  )}
               </div>
 
               <button
@@ -357,19 +360,17 @@ export default function ResumePage() {
             )}
 
             <SkillsPanel
-              {...(skillsLoading
-                ? { state: "loading" as const }
-                : skillsError
-                  ? {
-                      state: "error" as const,
-                      message: skillsError,
-                      onRetry: () => void loadSavedSkills(),
-                    }
-                  : {
-                      state: "ready" as const,
-                      skills,
-                      filename: skillsFile,
-                    })}
+              {...(skillsLoading ? { state: "loading" as const } : skillsError
+                ? {
+                  state: "error" as const,
+                  message: skillsError,
+                  onRetry: () => void loadSavedSkills(),
+                }
+                : {
+                  state: "ready" as const,
+                  skills,
+                  filename: skillsFile,
+                })}
             />
 
             {result && (

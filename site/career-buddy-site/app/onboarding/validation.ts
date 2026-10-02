@@ -38,8 +38,9 @@ export function validateStep(
         : "Choose at least one way you like to learn.";
     case 4: {
       const hours = data.weeklyAvailabilityHours;
-      if (hours === "")
+      if (hours === "") {
         return "Enter how many hours per week you can dedicate.";
+      }
       if (
         !Number.isInteger(hours) ||
         hours < LIMITS.minWeeklyHours ||

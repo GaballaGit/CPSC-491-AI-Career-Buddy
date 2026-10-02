@@ -24,9 +24,17 @@ export class HttpError extends Error {
 }
 
 // Success Envelope
-export function ok(data: unknown, status = 200): Response {
+export function ok(
+  data: unknown,
+  status = 200,
+  meta: Record<string, unknown> = {},
+): Response {
   return Response.json(
-    { success: true, data, meta: { timestamp: new Date().toISOString() } },
+    {
+      success: true,
+      data,
+      meta: { timestamp: new Date().toISOString(), ...meta },
+    },
     { status, headers: corsHeaders },
   );
 }

@@ -49,8 +49,8 @@ export default function FeedbackPanel({ text }: { text: string }) {
           {loading
             ? "Reviewing..."
             : feedback
-              ? "Review again"
-              : "Get AI feedback"}
+            ? "Review again"
+            : "Get AI feedback"}
         </button>
       </div>
 
@@ -103,15 +103,13 @@ export default function FeedbackPanel({ text }: { text: string }) {
                   <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">
                     {title}
                   </h3>
-                  {items.length > 0 ? (
-                    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
-                      {items.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="mt-2 text-sm text-zinc-500">None noted.</p>
-                  )}
+                  {items.length > 0
+                    ? (
+                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+                        {items.map((item) => <li key={item}>{item}</li>)}
+                      </ul>
+                    )
+                    : <p className="mt-2 text-sm text-zinc-500">None noted.</p>}
                 </div>
               );
             })}

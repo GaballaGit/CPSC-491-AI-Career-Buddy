@@ -33,12 +33,13 @@ export default function JobDetail({ id }: { id: string }) {
     );
   }
 
-  if (!job)
+  if (!job) {
     return (
       <main className="page-shell detail">
         <p className="notice">Loading role…</p>
       </main>
     );
+  }
 
   return (
     <main className="page-shell detail">
@@ -53,14 +54,14 @@ export default function JobDetail({ id }: { id: string }) {
       )}
       {matchStatus === "signed_out" && (
         <p className="notice prompt">
-          <Link href="/signin">Sign in</Link> to compare this role against your
-          skills.
+          <Link href="/signin">Sign in</Link>{" "}
+          to compare this role against your skills.
         </p>
       )}
       {matchStatus === "profile_missing" && (
         <p className="notice prompt">
-          <Link href="/onboarding">Complete onboarding</Link> to see your
-          matched and missing skills.
+          <Link href="/onboarding">Complete onboarding</Link>{" "}
+          to see your matched and missing skills.
         </p>
       )}
       <h2>Required skills</h2>
@@ -80,35 +81,39 @@ export default function JobDetail({ id }: { id: string }) {
           <div className="match-columns">
             <div>
               <h3>Matched skills</h3>
-              {job.match.matched.length ? (
-                <div className="skills success-skills">
-                  {job.match.matched.map((skill) => (
-                    <span className="skill" key={skill.name}>
-                      {skill.name}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="notice compact">
-                  No required skills matched yet.
-                </p>
-              )}
+              {job.match.matched.length
+                ? (
+                  <div className="skills success-skills">
+                    {job.match.matched.map((skill) => (
+                      <span className="skill" key={skill.name}>
+                        {skill.name}
+                      </span>
+                    ))}
+                  </div>
+                )
+                : (
+                  <p className="notice compact">
+                    No required skills matched yet.
+                  </p>
+                )}
             </div>
             <div>
               <h3>Missing skills</h3>
-              {job.match.missing.length ? (
-                <div className="skills missing-skills">
-                  {job.match.missing.map((skill) => (
-                    <span className="skill" key={skill.name}>
-                      {skill.name}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="notice compact">
-                  You have all listed required skills.
-                </p>
-              )}
+              {job.match.missing.length
+                ? (
+                  <div className="skills missing-skills">
+                    {job.match.missing.map((skill) => (
+                      <span className="skill" key={skill.name}>
+                        {skill.name}
+                      </span>
+                    ))}
+                  </div>
+                )
+                : (
+                  <p className="notice compact">
+                    You have all listed required skills.
+                  </p>
+                )}
             </div>
           </div>
         </section>
