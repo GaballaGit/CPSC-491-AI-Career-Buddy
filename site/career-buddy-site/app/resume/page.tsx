@@ -3,7 +3,11 @@
 import { authHeaders } from "../../lib/auth";
 import type { ResumeUploadData, ResumeUploadResponse, Skill } from "./types";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getSavedResumeSkills, isSignedIn, ResumeRequestError } from "../../lib/resume";
+import {
+  getSavedResumeSkills,
+  isSignedIn,
+  ResumeRequestError,
+} from "../../lib/resume";
 import Link from "next/link";
 import SkillsPanel from "./skills-panel";
 
@@ -181,16 +185,6 @@ export default function ResumePage() {
 
   const stats = result
     ? [
-<<<<<<< HEAD
-        { label: "Characters", value: result.characters.toLocaleString() },
-        { label: "Words", value: countWords(result.text).toLocaleString() },
-        { label: "File size", value: formatBytes(result.sizeBytes) },
-        {
-          label: "Format",
-          value: getFileExtension(result.filename).toUpperCase() || "—",
-        },
-      ]
-=======
       { label: "Characters", value: result.characters.toLocaleString() },
       { label: "Words", value: countWords(result.text).toLocaleString() },
       { label: "File size", value: formatBytes(result.sizeBytes) },
@@ -199,7 +193,6 @@ export default function ResumePage() {
         value: result.filename.split(".").pop()?.toUpperCase() ?? "—",
       },
     ]
->>>>>>> 991967a (run deno fmt)
     : [];
 
   return (
@@ -246,118 +239,8 @@ export default function ResumePage() {
               href="/signin"
               className="mt-4 inline-flex h-10 items-center rounded-lg bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700"
             >
-<<<<<<< HEAD
               Sign in
             </Link>
-=======
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.75}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-6 w-6"
-                aria-hidden="true"
-              >
-                {file
-                  ? (
-                    <>
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <path d="M14 2v6h6" />
-                      <path d="m9 15 2 2 4-4" />
-                    </>
-                  )
-                  : (
-                    <>
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <path d="m7 10 5-5 5 5" />
-                      <path d="M12 5v12" />
-                    </>
-                  )}
-              </svg>
-            </div>
-
-            {file
-              ? (
-                <>
-                  <p className="mt-4 font-mono text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                    {file.name}
-                  </p>
-                  <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-                    {formatBytes(file.size)} · click to choose another
-                  </p>
-                </>
-              )
-              : (
-                <>
-                  <p className="mt-4 text-base font-medium text-zinc-900 dark:text-zinc-100">
-                    Drop a file here, or click to browse
-                  </p>
-                  <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-                    PDF or Word, up to 5 MB
-                  </p>
-                </>
-              )}
-          </div>
-
-          <button
-            type="button"
-            onClick={handleUpload}
-            disabled={!file || uploading}
-            className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-lg bg-indigo-600 px-8 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:bg-zinc-200 disabled:text-zinc-400 sm:w-auto dark:disabled:bg-zinc-800 dark:disabled:text-zinc-600"
-          >
-            {uploading && (
-              <svg
-                viewBox="0 0 24 24"
-                className="h-4 w-4 animate-spin"
-                aria-hidden="true"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="9"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                  strokeOpacity={0.3}
-                />
-                <path
-                  d="M21 12a9 9 0 0 0-9-9"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                  strokeLinecap="round"
-                />
-              </svg>
-            )}
-            {uploading ? "Extracting..." : "Extract text"}
-          </button>
-        </div>
-
-        {error && (
-          <div className="mt-6 flex gap-3 rounded-xl border border-red-300 bg-red-50 px-5 py-4 dark:border-red-900 dark:bg-red-950/50">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.75}
-              strokeLinecap="round"
-              className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 8v4M12 16h.01" />
-            </svg>
-            <div>
-              <p className="text-sm font-semibold text-red-900 dark:text-red-200">
-                We could not read that file
-              </p>
-              <p className="mt-1 text-sm text-red-700 dark:text-red-300">
-                {error}
-              </p>
-            </div>
->>>>>>> 991967a (run deno fmt)
           </div>
         )}
 
@@ -408,41 +291,45 @@ export default function ResumePage() {
                     className="h-6 w-6"
                     aria-hidden="true"
                   >
-                    {file ? (
-                      <>
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <path d="M14 2v6h6" />
-                        <path d="m9 15 2 2 4-4" />
-                      </>
-                    ) : (
-                      <>
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <path d="m7 10 5-5 5 5" />
-                        <path d="M12 5v12" />
-                      </>
-                    )}
+                    {file
+                      ? (
+                        <>
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <path d="M14 2v6h6" />
+                          <path d="m9 15 2 2 4-4" />
+                        </>
+                      )
+                      : (
+                        <>
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <path d="m7 10 5-5 5 5" />
+                          <path d="M12 5v12" />
+                        </>
+                      )}
                   </svg>
                 </div>
 
-                {file ? (
-                  <>
-                    <p className="mt-4 font-mono text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                      {file.name}
-                    </p>
-                    <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-                      {formatBytes(file.size)} · click to choose another
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="mt-4 text-base font-medium text-zinc-900 dark:text-zinc-100">
-                      Drop a file here, or click to browse
-                    </p>
-                    <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-                      PDF or Word, up to 5 MB
-                    </p>
-                  </>
-                )}
+                {file
+                  ? (
+                    <>
+                      <p className="mt-4 font-mono text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                        {file.name}
+                      </p>
+                      <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                        {formatBytes(file.size)} · click to choose another
+                      </p>
+                    </>
+                  )
+                  : (
+                    <>
+                      <p className="mt-4 text-base font-medium text-zinc-900 dark:text-zinc-100">
+                        Drop a file here, or click to browse
+                      </p>
+                      <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                        PDF or Word, up to 5 MB
+                      </p>
+                    </>
+                  )}
               </div>
 
               <button
@@ -505,19 +392,17 @@ export default function ResumePage() {
             )}
 
             <SkillsPanel
-              {...(skillsLoading
-                ? { state: "loading" as const }
-                : skillsError
-                  ? {
-                      state: "error" as const,
-                      message: skillsError,
-                      onRetry: () => void loadSavedSkills(),
-                    }
-                  : {
-                      state: "ready" as const,
-                      skills,
-                      filename: skillsFile,
-                    })}
+              {...(skillsLoading ? { state: "loading" as const } : skillsError
+                ? {
+                  state: "error" as const,
+                  message: skillsError,
+                  onRetry: () => void loadSavedSkills(),
+                }
+                : {
+                  state: "ready" as const,
+                  skills,
+                  filename: skillsFile,
+                })}
             />
 
             {result && (
