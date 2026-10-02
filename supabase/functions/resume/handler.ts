@@ -1,10 +1,16 @@
 /** Resume function: upload (POST /resume), saved skills (GET /resume/skills),
- * and deployment health verification (GET /resume/health).
+ * AI feedback (POST /resume/feedback), and deployment health verification
+ * (GET /resume/health).
  */
 
 import { type AuthContext, authenticate } from "../_shared/auth.ts";
 import { corsHeaders, fail, HttpError, ok } from "../_shared/http.ts";
 import { extractResumeText } from "../_shared/resume/extract.ts";
+import {
+  generateFeedback,
+  llmConfigFromEnv,
+  type ResumeFeedback,
+} from "../_shared/resume/feedback.ts";
 import {
   type ResumeSkillStore,
   supabaseResumeSkillStore,
@@ -15,12 +21,31 @@ import { validateResumeFile } from "../_shared/resume/validate.ts";
 export interface ResumeDeps {
   authenticate(req: Request): Promise<AuthContext | null>;
   store(auth: AuthContext): ResumeSkillStore;
+  feedback?(text: string, targetRole: string | null): Promise<ResumeFeedback>;
+  targetRole?(auth: AuthContext): Promise<string | null>;
+}
+
+// Target Role - From the user's Career Profile, null when there is none
+async function careerProfileTargetRole(
+  auth: AuthContext,
+): Promise<string | null> {
+  const { data } = await auth.db
+    .from("career_profiles")
+    .select("target_career")
+    .eq("user_id", auth.userId)
+    .maybeSingle();
+  return data?.target_career ?? null;
 }
 
 const defaultDeps: ResumeDeps = {
   authenticate,
   store: (auth) => supabaseResumeSkillStore(auth.db),
+  feedback: (text, targetRole) =>
+    generateFeedback(text, targetRole, llmConfigFromEnv()),
+  targetRole: careerProfileTargetRole,
 };
+
+const MAX_FEEDBACK_TEXT = 50_000;
 
 // Public health response used by post-deployment smoke checks.
 // Keep this intentionally small and free of secrets or environment details.
@@ -102,6 +127,39 @@ async function savedSkills(
   );
 }
 
+// Feedback - Resume text (+ optional target role) to structured AI feedback
+async function feedback(req: Request, deps: ResumeDeps): Promise<Response> {
+  const auth = await deps.authenticate(req);
+  if (!auth) {
+    throw new HttpError(
+      401,
+      "AUTHENTICATION_REQUIRED",
+      "Sign in to use resume features.",
+    );
+  }
+
+  const body = await req.json().catch(() => null) as {
+    text?: unknown;
+    targetRole?: unknown;
+  } | null;
+  const text = typeof body?.text === "string" ? body.text.trim() : "";
+  if (!text || text.length > MAX_FEEDBACK_TEXT) {
+    throw new HttpError(400, "VALIDATION_ERROR", "Resume text is required.", [
+      { field: "text", message: "Upload a resume before asking for feedback." },
+    ]);
+  }
+
+  const givenRole = typeof body?.targetRole === "string"
+    ? body.targetRole.trim()
+    : "";
+  const targetRole = givenRole ||
+    (await deps.targetRole?.(auth).catch(() => null)) || null;
+
+  const generate = deps.feedback ?? defaultDeps.feedback!;
+  const result = await generate(text, targetRole);
+  return ok({ ...result, targetRole });
+}
+
 export function createResumeHandler(
   deps: ResumeDeps = defaultDeps,
 ) {
@@ -125,6 +183,10 @@ export function createResumeHandler(
         return health();
       }
 
+      if (req.method === "POST" && path.endsWith("/feedback")) {
+        return await feedback(req, deps);
+      }
+
       if (
         req.method === "POST" &&
         !path.endsWith("/skills")
@@ -142,7 +204,7 @@ export function createResumeHandler(
       throw new HttpError(
         405,
         "INVALID_REQUEST",
-        "Use POST /resume to upload, GET /resume/skills to read skills, or GET /resume/health for health verification.",
+        "Use POST /resume to upload, GET /resume/skills to read skills, POST /resume/feedback for AI feedback, or GET /resume/health for health verification.",
       );
     } catch (error) {
       return fail(error);

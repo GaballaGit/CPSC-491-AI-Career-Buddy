@@ -9,6 +9,7 @@ import {
   ResumeRequestError,
   uploadResume,
 } from "../../lib/resume";
+import FeedbackPanel from "./feedback-panel";
 import SkillsPanel from "./skills-panel";
 import type { ResumeUploadData, Skill } from "./types";
 
@@ -334,6 +335,10 @@ export default function ResumePage() {
                       filename: skillsFile,
                     })}
             />
+
+            {result && (
+              <FeedbackPanel key={result.filename} text={result.text} />
+            )}
 
             {result && (
               <section className="mt-12">

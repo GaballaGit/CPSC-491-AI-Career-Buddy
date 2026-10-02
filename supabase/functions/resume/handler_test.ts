@@ -12,6 +12,7 @@ const fixtures = new URL("../_shared/resume/fixtures/", import.meta.url);
 // Fake Store - In memory, keyed by user id
 function fakeDeps(signedInAs: string | null) {
   const rows = new Map<string, ResumeSkills>();
+  const feedbackCalls: Array<{ text: string; targetRole: string | null }> = [];
 
   const store: ResumeSkillStore = {
     save(userId, filename, skills) {
@@ -41,11 +42,24 @@ function fakeDeps(signedInAs: string | null) {
       ),
 
     store: () => store,
+
+    feedback: (text, targetRole) => {
+      feedbackCalls.push({ text, targetRole });
+      return Promise.resolve({
+        strengths: ["Clear skills section"],
+        weaknesses: ["No metrics"],
+        missing_skills: ["AWS"],
+        suggestions: ["Quantify impact"],
+      });
+    },
+
+    targetRole: () => Promise.resolve("Backend Engineer"),
   });
 
   return {
     handler,
     rows,
+    feedbackCalls,
   };
 }
 
@@ -319,4 +333,56 @@ Deno.test("OPTIONS returns CORS headers", async () => {
     res.headers.get("Access-Control-Allow-Origin"),
     "*",
   );
+});
+
+// Helper - POST /resume/feedback with a JSON body
+function askFeedback(
+  handler: (req: Request) => Promise<Response>,
+  body: unknown,
+) {
+  return handler(
+    new Request("http://localhost/resume/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+  );
+}
+
+Deno.test("feedback returns the four fields and the target role", async () => {
+  const { handler, feedbackCalls } = fakeDeps("user-a");
+  const res = await askFeedback(handler, { text: "Python developer" });
+  const body = await res.json();
+  strictEqual(res.status, 200);
+  deepStrictEqual(body.data.missing_skills, ["AWS"]);
+  strictEqual(body.data.targetRole, "Backend Engineer");
+  deepStrictEqual(feedbackCalls, [
+    { text: "Python developer", targetRole: "Backend Engineer" },
+  ]);
+});
+
+Deno.test("feedback uses a target role from the request first", async () => {
+  const { handler, feedbackCalls } = fakeDeps("user-a");
+  await (await askFeedback(handler, {
+    text: "Python developer",
+    targetRole: "Data Analyst",
+  })).body?.cancel();
+  strictEqual(feedbackCalls[0].targetRole, "Data Analyst");
+});
+
+Deno.test("feedback without text is rejected", async () => {
+  const { handler, feedbackCalls } = fakeDeps("user-a");
+  const res = await askFeedback(handler, { text: "   " });
+  const body = await res.json();
+  strictEqual(res.status, 400);
+  strictEqual(body.error.code, "VALIDATION_ERROR");
+  strictEqual(feedbackCalls.length, 0);
+});
+
+Deno.test("feedback while signed out is 401", async () => {
+  const { handler, feedbackCalls } = fakeDeps(null);
+  const res = await askFeedback(handler, { text: "Python developer" });
+  await res.body?.cancel();
+  strictEqual(res.status, 401);
+  strictEqual(feedbackCalls.length, 0);
 });
