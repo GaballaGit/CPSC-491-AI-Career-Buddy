@@ -14,9 +14,50 @@ function formatBytes(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+const ACCEPTED_EXTENSIONS = new Set(["pdf", "docx"]);
+
 // Stats - Simple counts shown under the extracted text
 function countWords(text: string): number {
   return text.trim() ? text.trim().split(/\s+/).length : 0;
+}
+
+function getFileExtension(filename: string): string {
+  return filename.split(".").pop()?.toLowerCase() ?? "";
+}
+
+function validateResumeFile(next: File): string | null {
+  const extension = getFileExtension(next.name);
+
+  if (!ACCEPTED_EXTENSIONS.has(extension)) {
+    return "Please upload a PDF or DOCX resume.";
+  }
+
+  if (next.size > MAX_FILE_SIZE_BYTES) {
+    return "Please upload a file that is 5 MB or smaller.";
+  }
+
+  return null;
+}
+
+async function parseUploadResponse(
+  response: Response,
+): Promise<ResumeUploadResponse> {
+  const contentType = response.headers.get("content-type");
+
+  if (!contentType?.includes("application/json")) {
+    return {
+      success: false,
+      error: {
+        code: "INVALID_RESPONSE",
+        message: response.ok
+          ? "The server returned an unexpected response."
+          : `Upload failed with status ${response.status}.`,
+      },
+    };
+  }
+
+  return (await response.json()) as ResumeUploadResponse;
 }
 
 export default function ResumePage() {
@@ -71,9 +112,24 @@ export default function ResumePage() {
 
   // Selection - Reset previous output whenever a new file is picked
   function selectFile(next: File | null) {
-    setFile(next);
     setResult(null);
     setError("");
+
+    if (!next) {
+      setFile(null);
+      return;
+    }
+
+    const validationError = validateResumeFile(next);
+
+    if (validationError) {
+      setFile(null);
+      setError(validationError);
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+
+    setFile(next);
   }
 
   // Upload - Send the file and keep either the text or the error message
@@ -93,12 +149,16 @@ export default function ResumePage() {
         headers: await authHeaders(),
         body: formData,
       });
-      const body: ResumeUploadResponse = await response.json();
+      const body = await parseUploadResponse(response);
 
-      if (body.success) {
+      if (body.success && response.ok) {
         setResult(body.data);
       } else {
-        setError("Something went wrong. Please try again.");
+        setError(
+          body.success
+            ? `Upload failed with status ${response.status}.`
+            : (body.error.details?.[0]?.message ?? body.error.message),
+        );
       }
     } catch (error) {
       setError(
@@ -126,7 +186,7 @@ export default function ResumePage() {
         { label: "File size", value: formatBytes(result.sizeBytes) },
         {
           label: "Format",
-          value: result.filename.split(".").pop()?.toUpperCase() ?? "—",
+          value: getFileExtension(result.filename).toUpperCase() || "—",
         },
       ]
     : [];
