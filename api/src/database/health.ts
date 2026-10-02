@@ -33,9 +33,8 @@ export async function checkDatabaseConnection(): Promise<DatabaseHealth> {
   } catch (error) {
     return {
       connected: false,
-      message: error instanceof Error
-        ? error.message
-        : "Unknown connection error",
+      message:
+        error instanceof Error ? error.message : "Unknown connection error",
     };
   }
 }

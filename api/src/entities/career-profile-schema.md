@@ -87,11 +87,11 @@ Request body:
 
 ```json
 {
-    "target_career": "Frontend Engineer",
-    "experience_level": "intermediate",
-    "skills": ["TypeScript", "React"],
-    "learning_preferences": ["hands_on_projects", "reading"],
-    "weekly_availability_hours": 10
+  "target_career": "Frontend Engineer",
+  "experience_level": "intermediate",
+  "skills": ["TypeScript", "React"],
+  "learning_preferences": ["hands_on_projects", "reading"],
+  "weekly_availability_hours": 10
 }
 ```
 
@@ -133,15 +133,15 @@ Example `data` when a profile exists:
 
 ```json
 {
-    "id": "5f1c…",
-    "user_id": "9a2e…",
-    "target_career": "Frontend Engineer",
-    "experience_level": "intermediate",
-    "skills": ["TypeScript", "React"],
-    "learning_preferences": ["hands_on_projects", "reading"],
-    "weekly_availability_hours": 10,
-    "created_at": "2026-09-18T02:00:00.000Z",
-    "updated_at": "2026-09-18T02:00:00.000Z"
+  "id": "5f1c…",
+  "user_id": "9a2e…",
+  "target_career": "Frontend Engineer",
+  "experience_level": "intermediate",
+  "skills": ["TypeScript", "React"],
+  "learning_preferences": ["hands_on_projects", "reading"],
+  "weekly_availability_hours": 10,
+  "created_at": "2026-09-18T02:00:00.000Z",
+  "updated_at": "2026-09-18T02:00:00.000Z"
 }
 ```
 
@@ -153,40 +153,40 @@ Example `data` when a profile exists:
 export type ExperienceLevel = "beginner" | "intermediate" | "advanced";
 
 export type LearningPreference =
-    | "videos"
-    | "reading"
-    | "hands_on_projects"
-    | "mentorship"
-    | "structured_courses";
+  | "videos"
+  | "reading"
+  | "hands_on_projects"
+  | "mentorship"
+  | "structured_courses";
 
 // Core Entity
 export interface CareerProfile {
-    id: string;
-    user_id: string;
-    target_career: string;
-    experience_level: ExperienceLevel;
-    skills: string[];
-    learning_preferences: LearningPreference[];
-    weekly_availability_hours: number;
-    created_at: string;
-    updated_at: string;
+  id: string;
+  user_id: string;
+  target_career: string;
+  experience_level: ExperienceLevel;
+  skills: string[];
+  learning_preferences: LearningPreference[];
+  weekly_availability_hours: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // Creation DTO
 export interface CreateCareerProfileDto {
-    target_career: string;
-    experience_level: ExperienceLevel;
-    skills: string[];
-    learning_preferences: LearningPreference[];
-    weekly_availability_hours: number;
+  target_career: string;
+  experience_level: ExperienceLevel;
+  skills: string[];
+  learning_preferences: LearningPreference[];
+  weekly_availability_hours: number;
 }
 
 // Update DTO
 export interface UpdateCareerProfileDto {
-    target_career?: string;
-    experience_level?: ExperienceLevel;
-    skills?: string[];
-    learning_preferences?: LearningPreference[];
-    weekly_availability_hours?: number;
+  target_career?: string;
+  experience_level?: ExperienceLevel;
+  skills?: string[];
+  learning_preferences?: LearningPreference[];
+  weekly_availability_hours?: number;
 }
 ```

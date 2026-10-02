@@ -39,13 +39,13 @@ export async function getUserFromAccessToken(
     const user = users[token];
     return user
       ? ({
-        id: user.id,
-        email: user.email,
-        app_metadata: {},
-        user_metadata: {},
-        aud: "authenticated",
-        created_at: new Date().toISOString(),
-      } as User)
+          id: user.id,
+          email: user.email,
+          app_metadata: {},
+          user_metadata: {},
+          aud: "authenticated",
+          created_at: new Date().toISOString(),
+        } as User)
       : null;
   }
 
