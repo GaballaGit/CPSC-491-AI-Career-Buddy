@@ -1,9 +1,23 @@
-// Upload Result - What the resume endpoint returns on success
+// Skill - Shared skill contract shape (api/src/utils/skills.ts)
+export interface Skill {
+  name: string;
+  key: string;
+}
+
+// Upload Result - What the resume function returns on success
 export interface ResumeUploadData {
   filename: string;
   sizeBytes: number;
   characters: number;
   text: string;
+  skills: Skill[];
+}
+
+// Saved Skills - GET /resume/skills; filename is null before the first upload
+export interface SavedResumeSkills {
+  filename: string | null;
+  skills: Skill[];
+  updatedAt: string | null;
 }
 
 // Error Payload - Shared API error shape
@@ -14,5 +28,5 @@ export interface ApiErrorPayload {
 }
 
 export type ResumeUploadResponse =
-  | { success: true; data: ResumeUploadData; meta: { timestamp: string } }
+  | { success: true; data: ResumeUploadData; meta?: { timestamp: string } }
   | { success: false; error: ApiErrorPayload };

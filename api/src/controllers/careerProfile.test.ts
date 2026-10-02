@@ -10,6 +10,8 @@ import type {
   CareerProfile,
   CreateCareerProfileDto,
 } from "../entities/index.js";
+import { compareSkills, mergeSkillSources } from "../utils/skillGap.js";
+import { normalizeSkill, normalizeSkills } from "../utils/skills.js";
 
 // Auth and the database are replaced with in-memory fakes so the tests don't
 // need Supabase.
@@ -343,5 +345,304 @@ describe("GET /api/career-profile", () => {
     assert.equal(response.status, 500);
     assert.equal(body.success, false);
     assert.equal(body.error.code, "INTERNAL_SERVER_ERROR");
+  });
+});
+
+// Updating a profile is the same POST upsert as onboarding (see
+// career-profile-schema.md §3.1), so these tests post over a saved profile.
+describe("updating a saved profile", () => {
+  const updated = {
+    target_career: "Data Analyst",
+    experience_level: "advanced",
+    skills: ["SQL", "Python"],
+    learning_preferences: ["videos"],
+    weekly_availability_hours: 20,
+  };
+
+  async function saved(user: TestUser): Promise<CareerProfile> {
+    const profile = store.get(user.id);
+    assert.ok(profile, "expected a saved profile");
+    return structuredClone(profile);
+  }
+
+  it("replaces every field and keeps the same row", async () => {
+    await postProfile(validProfile, alice);
+    const before = await saved(alice);
+
+    const response = await postProfile(updated, alice);
+    const body = (await response.json()) as { data: CareerProfile };
+
+    assert.equal(response.status, 201);
+    assert.equal(body.data.id, before.id);
+    assert.equal(body.data.user_id, alice.id);
+    assert.equal(body.data.created_at, before.created_at);
+    assert.ok(body.data.updated_at >= before.updated_at);
+    assert.equal(body.data.target_career, "Data Analyst");
+    assert.equal(body.data.experience_level, "advanced");
+    assert.deepEqual(body.data.skills, ["SQL", "Python"]);
+    assert.deepEqual(body.data.learning_preferences, ["videos"]);
+    assert.equal(body.data.weekly_availability_hours, 20);
+    assert.equal(store.size, 1);
+  });
+
+  it("returns the updated profile on the next read", async () => {
+    await postProfile(validProfile, alice);
+    await postProfile(updated, alice);
+
+    const body = (await (await getProfile(alice)).json()) as {
+      data: CareerProfile;
+    };
+
+    assert.equal(body.data.target_career, "Data Analyst");
+    assert.deepEqual(body.data.skills, ["SQL", "Python"]);
+  });
+
+  it("drops skills that were removed in the update", async () => {
+    await postProfile(validProfile, alice);
+    await postProfile({ ...validProfile, skills: ["React"] }, alice);
+
+    assert.deepEqual((await saved(alice)).skills, ["React"]);
+  });
+
+  it("never changes another user's profile", async () => {
+    await postProfile(validProfile, alice);
+    const aliceBefore = await saved(alice);
+
+    const response = await postProfile(updated, bob);
+
+    assert.equal(response.status, 201);
+    assert.deepEqual(await saved(alice), aliceBefore);
+    assert.equal((await saved(bob)).target_career, "Data Analyst");
+    assert.equal(store.size, 2);
+    assert.equal(upsertForUser.mock.calls.at(-1)?.arguments[0], bob.id);
+  });
+
+  it("ignores a user_id or id sent in the request body", async () => {
+    await postProfile(validProfile, alice);
+    const aliceBefore = await saved(alice);
+
+    const response = await postProfile(
+      { ...updated, user_id: alice.id, id: aliceBefore.id },
+      bob,
+    );
+    const body = (await response.json()) as { data: CareerProfile };
+
+    assert.equal(response.status, 201);
+    assert.equal(body.data.user_id, bob.id);
+    assert.notEqual(body.data.id, aliceBefore.id);
+    assert.deepEqual(await saved(alice), aliceBefore);
+
+    const [userId, dto] = upsertForUser.mock.calls.at(-1)?.arguments ?? [];
+    assert.equal(userId, bob.id);
+    assert.equal("user_id" in (dto as object), false);
+    assert.equal("id" in (dto as object), false);
+  });
+
+  it("rejects an update without a signed-in session and changes nothing", async () => {
+    await postProfile(validProfile, alice);
+    const before = await saved(alice);
+    upsertForUser.mock.resetCalls();
+
+    const response = await postProfile(updated);
+    const body = (await response.json()) as { error: { code: string } };
+
+    assert.equal(response.status, 401);
+    assert.equal(body.error.code, "AUTHENTICATION_REQUIRED");
+    assert.equal(upsertForUser.mock.callCount(), 0);
+    assert.deepEqual(await saved(alice), before);
+  });
+
+  it("rejects invalid update data with field details and writes nothing", async () => {
+    await postProfile(validProfile, alice);
+    const before = await saved(alice);
+    upsertForUser.mock.resetCalls();
+
+    const response = await postProfile(
+      { ...updated, experience_level: "expert", weekly_availability_hours: 0 },
+      alice,
+    );
+    const body = (await response.json()) as {
+      error: { code: string; details: { field: string; message: string }[] };
+    };
+
+    assert.equal(response.status, 400);
+    assert.equal(body.error.code, "VALIDATION_ERROR");
+    assert.deepEqual(body.error.details.map((d) => d.field).sort(), [
+      "experience_level",
+      "weekly_availability_hours",
+    ]);
+    assert.ok(body.error.details.every((d) => d.message.length > 0));
+    assert.equal(upsertForUser.mock.callCount(), 0);
+    assert.deepEqual(await saved(alice), before);
+  });
+
+  it("rejects a partial update because updates replace the whole profile", async () => {
+    await postProfile(validProfile, alice);
+    const before = await saved(alice);
+    upsertForUser.mock.resetCalls();
+
+    const response = await postProfile(
+      { target_career: "Data Analyst" },
+      alice,
+    );
+    const body = (await response.json()) as {
+      error: { details: { field: string }[] };
+    };
+
+    assert.equal(response.status, 400);
+    assert.deepEqual(body.error.details.map((d) => d.field).sort(), [
+      "experience_level",
+      "learning_preferences",
+      "skills",
+      "weekly_availability_hours",
+    ]);
+    assert.equal(upsertForUser.mock.callCount(), 0);
+    assert.deepEqual(await saved(alice), before);
+  });
+
+  it("keeps the saved profile when an update fails in the database", async () => {
+    await postProfile(validProfile, alice);
+    const before = await saved(alice);
+    upsertForUser.mock.mockImplementationOnce(async () => {
+      throw new Error("Could not save career profile: connection refused");
+    });
+
+    const response = await postProfile(updated, alice);
+
+    assert.equal(response.status, 500);
+    assert.deepEqual(await saved(alice), before);
+  });
+
+  it("normalizes case variants and aliases on update", async () => {
+    await postProfile(validProfile, alice);
+
+    const response = await postProfile(
+      {
+        ...validProfile,
+        skills: ["react", " REACT ", "js", "JavaScript", "nodejs", "postgres"],
+      },
+      alice,
+    );
+    const body = (await response.json()) as { data: CareerProfile };
+
+    assert.equal(response.status, 201);
+    assert.deepEqual(body.data.skills, [
+      "React",
+      "JavaScript",
+      "Node.js",
+      "PostgreSQL",
+    ]);
+    assert.deepEqual((await saved(alice)).skills, body.data.skills);
+  });
+
+  it("saves the same skills for the same input on create and on update", async () => {
+    const input = { ...validProfile, skills: ["ts", "TypeScript", "k8s"] };
+
+    const created = (await (await postProfile(input, alice)).json()) as {
+      data: CareerProfile;
+    };
+    const again = (await (await postProfile(input, alice)).json()) as {
+      data: CareerProfile;
+    };
+
+    assert.deepEqual(created.data.skills, again.data.skills);
+    assert.equal(new Set(again.data.skills).size, again.data.skills.length);
+  });
+
+  it("rejects an update that exceeds the skill limits and keeps the old skills", async () => {
+    await postProfile(validProfile, alice);
+    const before = await saved(alice);
+    const tooMany = Array.from({ length: 31 }, (_, i) => `skill-${i}`);
+
+    const response = await postProfile(
+      { ...validProfile, skills: tooMany },
+      alice,
+    );
+
+    assert.equal(response.status, 400);
+    assert.deepEqual((await saved(alice)).skills, before.skills);
+  });
+});
+
+// Skill names are stored as plain strings on the profile; the skill-gap code
+// compares normalized Skill objects. These tests check the two stay in step.
+describe("profile skills and skill gap", () => {
+  const required = ["JavaScript", "PostgreSQL", "Docker"].map((name) =>
+    normalizeSkill(name)!,
+  );
+
+  async function savedSkillKeys(user: TestUser) {
+    const body = (await (await getProfile(user)).json()) as {
+      data: CareerProfile;
+    };
+    return normalizeSkills(body.data.skills);
+  }
+
+  it("matches a job's required skills against a profile saved with aliases", async () => {
+    await postProfile({ ...validProfile, skills: ["js", "postgres"] }, alice);
+
+    const gap = compareSkills(await savedSkillKeys(alice), required);
+
+    assert.deepEqual(
+      gap.matched.map((s) => s.name),
+      ["JavaScript", "PostgreSQL"],
+    );
+    assert.deepEqual(
+      gap.missing.map((s) => s.name),
+      ["Docker"],
+    );
+  });
+
+  it("changes the gap when the profile is updated", async () => {
+    await postProfile({ ...validProfile, skills: ["js", "postgres"] }, alice);
+    await postProfile({ ...validProfile, skills: ["Docker"] }, alice);
+
+    const gap = compareSkills(await savedSkillKeys(alice), required);
+
+    assert.deepEqual(
+      gap.matched.map((s) => s.name),
+      ["Docker"],
+    );
+    assert.deepEqual(
+      gap.missing.map((s) => s.name),
+      ["JavaScript", "PostgreSQL"],
+    );
+  });
+
+  it("treats every required skill as missing for a different user's empty profile", async () => {
+    await postProfile({ ...validProfile, skills: ["js", "postgres"] }, alice);
+
+    const body = (await (await getProfile(bob)).json()) as {
+      data: CareerProfile | null;
+    };
+    const bobSkills = normalizeSkills(body.data?.skills ?? []);
+    const gap = compareSkills(bobSkills, required);
+
+    assert.deepEqual(gap.matched, []);
+    assert.equal(gap.missing.length, required.length);
+  });
+
+  it("merges profile skills with resume and project skills without duplicates", async () => {
+    await postProfile({ ...validProfile, skills: ["js", "react"] }, alice);
+
+    const merged = mergeSkillSources([
+      { source: "profile", skills: await savedSkillKeys(alice) },
+      { source: "resume", skills: normalizeSkills(["JavaScript", "Docker"]) },
+      { source: "project", skills: normalizeSkills(["postgres", "React"]) },
+    ]);
+
+    assert.deepEqual(
+      merged.map((s) => [s.name, s.source]),
+      [
+        ["JavaScript", "profile"],
+        ["React", "profile"],
+        ["Docker", "resume"],
+        ["PostgreSQL", "project"],
+      ],
+    );
+    assert.deepEqual(
+      compareSkills(merged, required).missing.map((s) => s.name),
+      [],
+    );
   });
 });
