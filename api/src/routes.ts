@@ -16,7 +16,10 @@ import {
   updateProject,
 } from "./controllers/projects.js";
 import { uploadResume } from "./controllers/resumes.js";
-import { requireAuthentication } from "./middleware/authentication.js";
+import {
+  optionalAuthentication,
+  requireAuthentication,
+} from "./middleware/authentication.js";
 
 export const router = Router();
 
@@ -26,8 +29,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.post("/auth/signup", signUp);
 router.get("/auth/me", requireAuthentication, getCurrentUser);
 
-router.get("/jobs", listJobs);
-router.get("/jobs/:id", getJob);
+router.get("/jobs", optionalAuthentication, listJobs);
+router.get("/jobs/:id", optionalAuthentication, getJob);
 
 router.post("/career-profile", requireAuthentication, createCareerProfile);
 
