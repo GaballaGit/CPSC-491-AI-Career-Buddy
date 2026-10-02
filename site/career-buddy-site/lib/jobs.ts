@@ -45,10 +45,31 @@ interface JobResponse {
   meta?: { matching?: { status?: JobMatchStatus } };
 }
 
-async function optionalAuthHeaders(): Promise<HeadersInit> {
+async function functionHeaders(): Promise<HeadersInit> {
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!anonKey) {
+    throw new Error(
+      "Supabase Auth is not configured. Set NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+    );
+  }
+
   const { data } = await getSupabaseClient().auth.getSession();
-  const token = data.session?.access_token;
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  const token = data.session?.access_token ?? anonKey;
+
+  return {
+    apikey: anonKey,
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+function jobsFunctionUrl(path = "", query = ""): string {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl) {
+    throw new Error(
+      "Supabase Auth is not configured. Set NEXT_PUBLIC_SUPABASE_URL.",
+    );
+  }
+  return `${supabaseUrl}/functions/v1/jobs${path}${query}`;
 }
 
 function matchStatus(payload: JobsResponse | JobResponse): JobMatchStatus {
@@ -57,8 +78,8 @@ function matchStatus(payload: JobsResponse | JobResponse): JobMatchStatus {
 
 export async function getJobs(category?: string): Promise<JobsResult> {
   const query = category ? `?category=${encodeURIComponent(category)}` : "";
-  const response = await fetch(`/api/jobs${query}`, {
-    headers: await optionalAuthHeaders(),
+  const response = await fetch(jobsFunctionUrl("", query), {
+    headers: await functionHeaders(),
   });
   if (!response.ok) throw new Error("Unable to load jobs.");
   const payload = (await response.json()) as JobsResponse;
@@ -67,8 +88,8 @@ export async function getJobs(category?: string): Promise<JobsResult> {
 }
 
 export async function getJob(id: string): Promise<JobResult> {
-  const response = await fetch(`/api/jobs/${id}`, {
-    headers: await optionalAuthHeaders(),
+  const response = await fetch(jobsFunctionUrl(`/${id}`), {
+    headers: await functionHeaders(),
   });
   if (response.status === 404) throw new Error("Job not found.");
   if (!response.ok) throw new Error("Unable to load job.");

@@ -29,6 +29,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.post("/auth/signup", signUp);
 router.get("/auth/me", requireAuthentication, getCurrentUser);
 
+// Deprecated fallback (C40CS-20): frontend now calls the Supabase `jobs` Edge Function.
 router.get("/jobs", optionalAuthentication, listJobs);
 router.get("/jobs/:id", optionalAuthentication, getJob);
 

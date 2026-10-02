@@ -61,7 +61,9 @@ deno lint supabase/functions
 
 ## Migration status
 
-| Route | Function | Status |
-|---|---|---|
-| `POST /api/resumes` | `POST /resume` | Migrated. Express route deprecated; frontend switches after C40CS-15 deploys the function. |
-| — | `GET /resume/skills` | New in C40CS-12: current user's saved resume skills. |
+| Route               | Function             | Status                                                                                                           |
+| ------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `POST /api/resumes` | `POST /resume`       | Migrated. Express route deprecated; frontend switches after C40CS-15 deploys the function.                       |
+| —                   | `GET /resume/skills` | New in C40CS-12: current user's saved resume skills.                                                             |
+| `GET /api/jobs`     | `GET /jobs`          | Migrated in C40CS-20. Frontend calls the Edge Function directly; Express route remains as a deprecated fallback. |
+| `GET /api/jobs/:id` | `GET /jobs/:id`      | Migrated in C40CS-20 with optional match metadata for signed-in users.                                           |

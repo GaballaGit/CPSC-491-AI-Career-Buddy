@@ -424,3 +424,9 @@ entrypoint = "./functions/resume/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/resume/*.html" ]
+
+[functions.jobs]
+enabled = true
+verify_jwt = true
+import_map = "./functions/jobs/deno.json"
+entrypoint = "./functions/jobs/index.ts"
