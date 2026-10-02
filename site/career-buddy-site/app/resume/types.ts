@@ -35,3 +35,7 @@ export interface ApiErrorPayload {
   message: string;
   details?: { field: string; message: string }[];
 }
+
+export type ResumeUploadResponse =
+  | { success: true; data: ResumeUploadData; meta?: { timestamp: string } }
+  | { success: false; error: ApiErrorPayload };

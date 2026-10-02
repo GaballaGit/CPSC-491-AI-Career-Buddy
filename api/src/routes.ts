@@ -16,7 +16,10 @@ import {
   updateProject,
 } from "./controllers/projects.js";
 import { uploadResume } from "./controllers/resumes.js";
-import { requireAuthentication } from "./middleware/authentication.js";
+import {
+  optionalAuthentication,
+  requireAuthentication,
+} from "./middleware/authentication.js";
 
 export const router = Router();
 
@@ -26,8 +29,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.post("/auth/signup", signUp);
 router.get("/auth/me", requireAuthentication, getCurrentUser);
 
-router.get("/jobs", listJobs);
-router.get("/jobs/:id", getJob);
+router.get("/jobs", optionalAuthentication, listJobs);
+router.get("/jobs/:id", optionalAuthentication, getJob);
 
 router.post("/career-profile", requireAuthentication, createCareerProfile);
 
@@ -39,5 +42,9 @@ router.get("/projects/:id", requireAuthentication, getProject);
 router.patch("/projects/:id", requireAuthentication, updateProject);
 router.delete("/projects/:id", requireAuthentication, deleteProject);
 
-// Deprecated - Replaced by the resume Edge Function (C40CS-11); remove after C40CS-15 deploys it
-router.post("/resumes", upload.single("file"), uploadResume);
+router.post(
+  "/resumes",
+  requireAuthentication,
+  upload.single("file"),
+  uploadResume,
+);

@@ -98,3 +98,26 @@ From the repo root, with a token in the environment:
 $env:SUPABASE_ACCESS_TOKEN = "<token>"
 npx supabase functions deploy --project-ref <ref> --use-api
 ```
+
+## Frontend (Cloudflare Workers)
+
+The Next.js frontend is deployed with OpenNext for Cloudflare Workers. Pull requests run lint and build through `.github/workflows/frontend-ci.yml`; merges to `main` deploy through `.github/workflows/frontend-cd.yml` when frontend files change.
+
+### One-time setup
+
+Create a GitHub `production` environment with these secrets:
+
+| Secret | Value |
+| --- | --- |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token with permission to deploy Workers |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID |
+
+Add these environment variables to `production`:
+
+| Variable | Value |
+| --- | --- |
+| `NEXT_PUBLIC_API_URL` | Deployed API base URL |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key |
+
+The frontend worker URL is `https://career-buddy-site.<account-subdomain>.workers.dev` unless a custom domain is configured in Cloudflare. No service-role, AI, or other private keys belong in frontend variables.
