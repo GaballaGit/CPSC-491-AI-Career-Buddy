@@ -34,7 +34,7 @@ Storage formats do not change. Skills are stored as plain strings and turned int
 | Subsystem      | Stored as                                        | Normalize with                                          |
 | -------------- | ------------------------------------------------ | ------------------------------------------------------- |
 | Career Profile | `career_profiles.skills` (text[], display names) | `normalizeSkills` on save (done in C40CS-6)             |
-| Resume         | resume-derived skills (C40CS-12)                 | `normalizeSkills` on extracted candidates               |
+| Resume         | `resume_skills.skills` (text[], display names)   | `normalizeSkills` on extracted candidates (C40CS-12)    |
 | Jobs           | `job_required_skills.skill` (lowercase)          | `normalizeSkill(name)` then compare by `key` (C40CS-17) |
 | Portfolio      | `projects.skills_demonstrated` (text[])          | `normalizeSkills` on create/update (C40CS-23)           |
 
@@ -44,6 +44,30 @@ Jobs already store the lowercase form. A job skill stored as `nodejs` is compare
 
 `skills.ts` has no imports, so it runs unchanged under Deno. Edge Functions import it by relative path with the `.ts` extension. The Deno import path and CI check are set up in C40CS-10 and C40CS-11.
 
-## Not covered here
+## Skill gaps and comparison (C40CS-7)
 
-`SkillGap` (matched / missing / known) and `compareSkills` are defined in C40CS-7 and build on this contract.
+Code: `api/src/utils/skillGap.ts`. This is the single comparison used across subsystems (Job Matching, and later the roadmap) — do not re-implement it.
+
+```ts
+type SkillSource = "profile" | "resume" | "project";
+
+interface SourcedSkill extends Skill {
+  source: SkillSource;
+}
+
+interface SkillGap<T extends Skill = Skill> {
+  matched: Skill[]; // required skills the user has, in requiredSkills order
+  missing: Skill[]; // required skills the user lacks, in requiredSkills order
+  known: T[]; // the user's own skills, deduped by key
+}
+```
+
+`compareSkills(userSkills, requiredSkills)`:
+
+- Both arguments must already be normalized `Skill`s (via `normalizeSkill`/`normalizeSkills`) — it compares by `key`, it does not normalize strings itself.
+- Pure and deterministic: the same input always returns the same output and order. `matched`/`missing` follow `requiredSkills`' order; `known` follows `userSkills`' order.
+- Empty `userSkills` → everything in `requiredSkills` is `missing`. Empty `requiredSkills` → nothing is `missing`. Neither case errors.
+
+`mergeSkillSources(sources)` merges a user's skills from profile/resume/project into one deduped `SourcedSkill[]`, keeping each skill's `source` (first source it's seen from wins on a duplicate key). Feed the result straight into `compareSkills` as `userSkills`.
+
+**Not in scope:** AI roadmap generation.

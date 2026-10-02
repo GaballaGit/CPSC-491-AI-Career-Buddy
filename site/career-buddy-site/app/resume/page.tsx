@@ -3,6 +3,17 @@
 import { useRef, useState } from "react";
 import { authHeaders } from "../../lib/auth";
 import type { ResumeUploadData, ResumeUploadResponse } from "./types";
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import {
+  getSavedResumeSkills,
+  isSignedIn,
+  ResumeRequestError,
+  uploadResume,
+} from "../../lib/resume";
+import SkillsPanel from "./skills-panel";
+import type { ResumeUploadData, Skill } from "./types";
 
 // Display - Turn raw bytes into something readable
 function formatBytes(bytes: number): string {
@@ -24,6 +35,47 @@ export default function ResumePage() {
   const [copied, setCopied] = useState(false);
   const [result, setResult] = useState<ResumeUploadData | null>(null);
   const [error, setError] = useState<string>("");
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [skillsFile, setSkillsFile] = useState<string | null>(null);
+  const [skillsLoading, setSkillsLoading] = useState(true);
+  const [skillsError, setSkillsError] = useState("");
+
+  // Saved Skills - Show what was found in the last upload
+  const loadSavedSkills = useCallback(async () => {
+    setSkillsLoading(true);
+    setSkillsError("");
+    try {
+      const saved = await getSavedResumeSkills();
+      setSkills(saved.skills);
+      setSkillsFile(saved.filename);
+    } catch (err) {
+      setSkillsError(
+        err instanceof ResumeRequestError
+          ? err.message
+          : "Could not load your skills.",
+      );
+    } finally {
+      setSkillsLoading(false);
+    }
+  }, []);
+
+  // First Load - Sign-in check, then saved skills
+  useEffect(() => {
+    let cancelled = false;
+    isSignedIn()
+      .then((yes) => {
+        if (cancelled) return;
+        setSignedIn(yes);
+        if (yes) void loadSavedSkills();
+      })
+      .catch(() => {
+        if (!cancelled) setSignedIn(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loadSavedSkills]);
 
   // Selection - Reset previous output whenever a new file is picked
   function selectFile(next: File | null) {
@@ -54,7 +106,7 @@ export default function ResumePage() {
       if (body.success) {
         setResult(body.data);
       } else {
-        setError(body.error.details?.[0]?.message ?? body.error.message);
+        setError("Something went wrong. Please try again.");
       }
     } catch (error) {
       setError(
@@ -124,188 +176,220 @@ export default function ResumePage() {
           so the rest of CareerLM can work with it.
         </p>
 
-        {/* Upload Card - Drop zone plus action */}
-        <div className="mt-10 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div
-            onClick={() => inputRef.current?.click()}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragging(true);
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragging(false);
-              selectFile(e.dataTransfer.files?.[0] ?? null);
-            }}
-            className={`cursor-pointer rounded-xl border-2 border-dashed px-8 py-14 text-center transition-colors ${
-              dragging
-                ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40"
-                : "border-zinc-300 hover:border-indigo-400 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:border-indigo-500 dark:hover:bg-zinc-800/50"
-            }`}
-          >
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".pdf,.docx"
-              onChange={(e) => selectFile(e.target.files?.[0] ?? null)}
-              className="hidden"
-            />
-
-            <div
-              className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${
-                file
-                  ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400"
-                  : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
-              }`}
+        {signedIn === false && (
+          <div className="mt-10 rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+            <p>Sign in to upload your resume and see your skills.</p>
+            <Link
+              href="/signin"
+              className="mt-4 inline-flex h-10 items-center rounded-lg bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700"
             >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.75}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-6 w-6"
-                aria-hidden="true"
-              >
-                {file ? (
-                  <>
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <path d="M14 2v6h6" />
-                    <path d="m9 15 2 2 4-4" />
-                  </>
-                ) : (
-                  <>
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <path d="m7 10 5-5 5 5" />
-                    <path d="M12 5v12" />
-                  </>
-                )}
-              </svg>
-            </div>
-
-            {file ? (
-              <>
-                <p className="mt-4 font-mono text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                  {file.name}
-                </p>
-                <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-                  {formatBytes(file.size)} · click to choose another
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="mt-4 text-base font-medium text-zinc-900 dark:text-zinc-100">
-                  Drop a file here, or click to browse
-                </p>
-                <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
-                  PDF or Word, up to 5 MB
-                </p>
-              </>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={handleUpload}
-            disabled={!file || uploading}
-            className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-lg bg-indigo-600 px-8 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:bg-zinc-200 disabled:text-zinc-400 sm:w-auto dark:disabled:bg-zinc-800 dark:disabled:text-zinc-600"
-          >
-            {uploading && (
-              <svg
-                viewBox="0 0 24 24"
-                className="h-4 w-4 animate-spin"
-                aria-hidden="true"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="9"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                  strokeOpacity={0.3}
-                />
-                <path
-                  d="M21 12a9 9 0 0 0-9-9"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                  strokeLinecap="round"
-                />
-              </svg>
-            )}
-            {uploading ? "Extracting..." : "Extract text"}
-          </button>
-        </div>
-
-        {error && (
-          <div className="mt-6 flex gap-3 rounded-xl border border-red-300 bg-red-50 px-5 py-4 dark:border-red-900 dark:bg-red-950/50">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.75}
-              strokeLinecap="round"
-              className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 8v4M12 16h.01" />
-            </svg>
-            <div>
-              <p className="text-sm font-semibold text-red-900 dark:text-red-200">
-                We could not read that file
-              </p>
-              <p className="mt-1 text-sm text-red-700 dark:text-red-300">
-                {error}
-              </p>
-            </div>
+              Sign in
+            </Link>
           </div>
         )}
 
-        {result && (
-          <section className="mt-12">
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
-              Extraction result
-            </h2>
+        {signedIn && (
+          <>
+            {/* Upload Card - Drop zone plus action */}
+            <div className="mt-10 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+              <div
+                onClick={() => inputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragging(false);
+                  selectFile(e.dataTransfer.files?.[0] ?? null);
+                }}
+                className={`cursor-pointer rounded-xl border-2 border-dashed px-8 py-14 text-center transition-colors ${
+                  dragging
+                    ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40"
+                    : "border-zinc-300 hover:border-indigo-400 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:border-indigo-500 dark:hover:bg-zinc-800/50"
+                }`}
+              >
+                <input
+                  ref={inputRef}
+                  type="file"
+                  accept=".pdf,.docx"
+                  onChange={(e) => selectFile(e.target.files?.[0] ?? null)}
+                  className="hidden"
+                />
 
-            {/* Stats - Quick numbers about what came back */}
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {stats.map((stat) => (
                 <div
-                  key={stat.label}
-                  className="rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                  className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${
+                    file
+                      ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400"
+                      : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                  }`}
                 >
-                  <p className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                    {stat.label}
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.75}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-6 w-6"
+                    aria-hidden="true"
+                  >
+                    {file ? (
+                      <>
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <path d="M14 2v6h6" />
+                        <path d="m9 15 2 2 4-4" />
+                      </>
+                    ) : (
+                      <>
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <path d="m7 10 5-5 5 5" />
+                        <path d="M12 5v12" />
+                      </>
+                    )}
+                  </svg>
+                </div>
+
+                {file ? (
+                  <>
+                    <p className="mt-4 font-mono text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                      {file.name}
+                    </p>
+                    <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                      {formatBytes(file.size)} · click to choose another
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-4 text-base font-medium text-zinc-900 dark:text-zinc-100">
+                      Drop a file here, or click to browse
+                    </p>
+                    <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                      PDF or Word, up to 5 MB
+                    </p>
+                  </>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleUpload}
+                disabled={!file || uploading}
+                className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-lg bg-indigo-600 px-8 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:bg-zinc-200 disabled:text-zinc-400 sm:w-auto dark:disabled:bg-zinc-800 dark:disabled:text-zinc-600"
+              >
+                {uploading && (
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4 animate-spin"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="9"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                      strokeOpacity={0.3}
+                    />
+                    <path
+                      d="M21 12a9 9 0 0 0-9-9"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                )}
+                {uploading ? "Reading resume..." : "Upload resume"}
+              </button>
+            </div>
+
+            {error && (
+              <div className="mt-6 flex gap-3 rounded-xl border border-red-300 bg-red-50 px-5 py-4 dark:border-red-900 dark:bg-red-950/50">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.75}
+                  strokeLinecap="round"
+                  className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 8v4M12 16h.01" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-red-900 dark:text-red-200">
+                    We could not read that file
                   </p>
-                  <p className="mt-1 text-xl font-bold tabular-nums text-zinc-900 dark:text-white">
-                    {stat.value}
+                  <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+                    {error}
                   </p>
                 </div>
-              ))}
-            </div>
-
-            <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <div className="flex items-center justify-between gap-4 border-b border-zinc-200 bg-zinc-50 px-5 py-3 dark:border-zinc-800 dark:bg-zinc-800/50">
-                <span className="truncate font-mono text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                  {result.filename}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="shrink-0 rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 transition-colors hover:bg-white dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                >
-                  {copied ? "Copied" : "Copy"}
-                </button>
               </div>
-              <pre className="max-h-[28rem] overflow-auto whitespace-pre-wrap px-5 py-4 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
-                {result.text}
-              </pre>
-            </div>
-          </section>
+            )}
+
+            <SkillsPanel
+              {...(skillsLoading
+                ? { state: "loading" as const }
+                : skillsError
+                  ? {
+                      state: "error" as const,
+                      message: skillsError,
+                      onRetry: () => void loadSavedSkills(),
+                    }
+                  : {
+                      state: "ready" as const,
+                      skills,
+                      filename: skillsFile,
+                    })}
+            />
+
+            {result && (
+              <section className="mt-12">
+                <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                  Extraction result
+                </h2>
+
+                {/* Stats - Quick numbers about what came back */}
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {stats.map((stat) => (
+                    <div
+                      key={stat.label}
+                      className="rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                    >
+                      <p className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                        {stat.label}
+                      </p>
+                      <p className="mt-1 text-xl font-bold tabular-nums text-zinc-900 dark:text-white">
+                        {stat.value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                  <div className="flex items-center justify-between gap-4 border-b border-zinc-200 bg-zinc-50 px-5 py-3 dark:border-zinc-800 dark:bg-zinc-800/50">
+                    <span className="truncate font-mono text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      {result.filename}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCopy}
+                      className="shrink-0 rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 transition-colors hover:bg-white dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    >
+                      {copied ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                  <pre className="max-h-[28rem] overflow-auto whitespace-pre-wrap px-5 py-4 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
+                    {result.text}
+                  </pre>
+                </div>
+              </section>
+            )}
+          </>
         )}
       </main>
     </div>
