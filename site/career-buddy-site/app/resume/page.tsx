@@ -1,19 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
 import { authHeaders } from "../../lib/auth";
-import type { ResumeUploadData, ResumeUploadResponse } from "./types";
-import Link from "next/link";
+import type { ResumeUploadData, ResumeUploadResponse, Skill } from "./types";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-import {
-  getSavedResumeSkills,
-  isSignedIn,
-  ResumeRequestError,
-  uploadResume,
-} from "../../lib/resume";
+import { getSavedResumeSkills, isSignedIn, ResumeRequestError, uploadResume } from "../../lib/resume";
+import Link from "next/link";
 import SkillsPanel from "./skills-panel";
-import type { ResumeUploadData, Skill } from "./types";
 
 // Display - Turn raw bytes into something readable
 function formatBytes(bytes: number): string {
