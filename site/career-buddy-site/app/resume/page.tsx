@@ -1,9 +1,7 @@
 "use client";
 
-import { authHeaders } from "../../lib/auth";
-import type { ResumeUploadData, ResumeUploadResponse, Skill } from "./types";
 import { useCallback, useEffect, useRef, useState } from "react";
-<<<<<<< HEAD
+import Link from "next/link";
 
 import {
   getSavedResumeSkills,
@@ -12,11 +10,8 @@ import {
   uploadResume,
 } from "../../lib/resume";
 import FeedbackPanel from "./feedback-panel";
-=======
-import { getSavedResumeSkills, isSignedIn, ResumeRequestError } from "../../lib/resume";
-import Link from "next/link";
->>>>>>> c8c01fd3192bdc99dc87d6381c341a2675d62c98
 import SkillsPanel from "./skills-panel";
+import type { ResumeUploadData, Skill } from "./types";
 
 // Display - Turn raw bytes into something readable
 function formatBytes(bytes: number): string {
@@ -49,26 +44,6 @@ function validateResumeFile(next: File): string | null {
   }
 
   return null;
-}
-
-async function parseUploadResponse(
-  response: Response,
-): Promise<ResumeUploadResponse> {
-  const contentType = response.headers.get("content-type");
-
-  if (!contentType?.includes("application/json")) {
-    return {
-      success: false,
-      error: {
-        code: "INVALID_RESPONSE",
-        message: response.ok
-          ? "The server returned an unexpected response."
-          : `Upload failed with status ${response.status}.`,
-      },
-    };
-  }
-
-  return (await response.json()) as ResumeUploadResponse;
 }
 
 export default function ResumePage() {
@@ -152,31 +127,18 @@ export default function ResumePage() {
     setResult(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("/api/resumes", {
-        method: "POST",
-        headers: await authHeaders(),
-        body: formData,
-      });
-      const body = await parseUploadResponse(response);
-
-      if (body.success && response.ok) {
-        setResult(body.data);
+      const data = await uploadResume(file);
+      setResult(data);
+      setSkills(data.skills);
+      setSkillsFile(data.filename);
+      setSkillsError("");
+    } catch (err) {
+      if (err instanceof ResumeRequestError) {
+        if (err.code === "AUTHENTICATION_REQUIRED") setSignedIn(false);
+        setError(err.message);
       } else {
-        setError(
-          body.success
-            ? `Upload failed with status ${response.status}.`
-            : (body.error.details?.[0]?.message ?? body.error.message),
-        );
+        setError("Something went wrong. Please try again.");
       }
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Could not reach the server. Make sure the API is running.",
-      );
     } finally {
       setUploading(false);
     }
