@@ -1,13 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  getSavedResumeSkills,
-  isSignedIn,
-  ResumeRequestError,
-} from "../../lib/resume";
-import Link from "next/link";
-
+import type { ResumeUploadData, Skill } from "./types";
 import {
   getSavedResumeSkills,
   isSignedIn,
@@ -16,7 +10,7 @@ import {
 } from "../../lib/resume";
 import FeedbackPanel from "./feedback-panel";
 import SkillsPanel from "./skills-panel";
-import type { ResumeUploadData, Skill } from "./types";
+import Link from "next/link";
 
 // Display - Turn raw bytes into something readable
 function formatBytes(bytes: number): string {
