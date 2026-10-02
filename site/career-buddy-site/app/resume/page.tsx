@@ -1,7 +1,7 @@
 "use client";
 
 import { authHeaders } from "../../lib/auth";
-import type { ResumeUploadData, ResumeUploadResponse, Skill } from "./types";
+import type { ResumeUploadData, Skill } from "./types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getSavedResumeSkills, isSignedIn, ResumeRequestError, uploadResume } from "../../lib/resume";
 import Link from "next/link";
