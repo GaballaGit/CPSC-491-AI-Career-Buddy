@@ -2,6 +2,7 @@ import { FunctionsHttpError } from "@supabase/supabase-js";
 
 import type {
   ApiErrorPayload,
+  ResumeFeedback,
   ResumeUploadData,
   SavedResumeSkills,
 } from "../app/resume/types";
@@ -23,6 +24,10 @@ const FRIENDLY_CODES = new Set([
   "VALIDATION_ERROR",
   "UNSUPPORTED_FILE_TYPE",
   "NO_TEXT_FOUND",
+  "AI_NOT_CONFIGURED",
+  "AI_UNAVAILABLE",
+  "AI_TIMEOUT",
+  "AI_INVALID_RESPONSE",
 ]);
 
 async function toRequestError(error: unknown): Promise<ResumeRequestError> {
@@ -80,4 +85,14 @@ export async function getSavedResumeSkills(): Promise<SavedResumeSkills> {
   );
   if (error) throw await toRequestError(error);
   return (data as { data: SavedResumeSkills }).data;
+}
+
+// AI Feedback - POST /resume/feedback (Edge Function)
+export async function getResumeFeedback(text: string): Promise<ResumeFeedback> {
+  const { data, error } = await getSupabaseClient().functions.invoke(
+    "resume/feedback",
+    { body: { text } },
+  );
+  if (error) throw await toRequestError(error);
+  return (data as { data: ResumeFeedback }).data;
 }

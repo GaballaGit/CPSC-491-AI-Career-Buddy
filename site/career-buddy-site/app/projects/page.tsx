@@ -2,15 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-import {
-  getProjects,
-  type Project,
-} from "../../lib/projects";
+import { getProjects, type Project } from "../../lib/projects";
 
 function formatStatus(status: Project["status"]) {
-  return status === "in_progress"
-    ? "In progress"
-    : "Completed";
+  return status === "in_progress" ? "In progress" : "Completed";
 }
 
 function formatDate(value: string) {
@@ -69,87 +64,87 @@ export default function ProjectsPage() {
         {!isLoading &&
           !errorMessage &&
           projects.length === 0 && (
-            <div className="rounded-2xl border border-black/[.08] bg-white p-8 text-center dark:border-white/[.145] dark:bg-zinc-950">
-              <h2 className="text-lg font-medium text-black dark:text-zinc-50">
-                No projects yet
-              </h2>
+          <div className="rounded-2xl border border-black/[.08] bg-white p-8 text-center dark:border-white/[.145] dark:bg-zinc-950">
+            <h2 className="text-lg font-medium text-black dark:text-zinc-50">
+              No projects yet
+            </h2>
 
-              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                Projects you add to your portfolio will appear here.
-              </p>
-            </div>
-          )}
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              Projects you add to your portfolio will appear here.
+            </p>
+          </div>
+        )}
 
         {!isLoading &&
           !errorMessage &&
           projects.length > 0 && (
-            <div className="grid gap-6 md:grid-cols-2">
-              {projects.map((project) => (
-                <article
-                  key={project.id}
-                  className="rounded-2xl border border-black/[.08] bg-white p-6 dark:border-white/[.145] dark:bg-zinc-950"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
-                      {project.title}
-                    </h2>
+          <div className="grid gap-6 md:grid-cols-2">
+            {projects.map((project) => (
+              <article
+                key={project.id}
+                className="rounded-2xl border border-black/[.08] bg-white p-6 dark:border-white/[.145] dark:bg-zinc-950"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
+                    {project.title}
+                  </h2>
 
-                    <span className="shrink-0 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                      {formatStatus(project.status)}
-                    </span>
+                  <span className="shrink-0 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                    {formatStatus(project.status)}
+                  </span>
+                </div>
+
+                <p className="mt-4 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                  {project.description}
+                </p>
+
+                <div className="mt-5">
+                  <h3 className="text-sm font-medium text-black dark:text-zinc-50">
+                    Skills
+                  </h3>
+
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {project.skills_demonstrated.map((skill) => (
+                      <span
+                        key={skill}
+                        className="rounded-full bg-zinc-100 px-3 py-1 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                      >
+                        {skill}
+                      </span>
+                    ))}
                   </div>
+                </div>
 
-                  <p className="mt-4 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                    {project.description}
-                  </p>
-
+                {project.project_urls.length > 0 && (
                   <div className="mt-5">
                     <h3 className="text-sm font-medium text-black dark:text-zinc-50">
-                      Skills
+                      Links
                     </h3>
 
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {project.skills_demonstrated.map((skill) => (
-                        <span
-                          key={skill}
-                          className="rounded-full bg-zinc-100 px-3 py-1 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                        >
-                          {skill}
-                        </span>
+                    <ul className="mt-2 flex flex-col gap-1">
+                      {project.project_urls.map((url) => (
+                        <li key={url}>
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="break-all text-sm text-blue-600 underline dark:text-blue-400"
+                          >
+                            {url}
+                          </a>
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   </div>
+                )}
 
-                  {project.project_urls.length > 0 && (
-                    <div className="mt-5">
-                      <h3 className="text-sm font-medium text-black dark:text-zinc-50">
-                        Links
-                      </h3>
-
-                      <ul className="mt-2 flex flex-col gap-1">
-                        {project.project_urls.map((url) => (
-                          <li key={url}>
-                            <a
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="break-all text-sm text-blue-600 underline dark:text-blue-400"
-                            >
-                              {url}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  <p className="mt-6 text-xs text-zinc-500">
-                    Updated {formatDate(project.updated_at)}
-                  </p>
-                </article>
-              ))}
-            </div>
-          )}
+                <p className="mt-6 text-xs text-zinc-500">
+                  Updated {formatDate(project.updated_at)}
+                </p>
+              </article>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );

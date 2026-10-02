@@ -1,19 +1,24 @@
 # Portfolio Project Schema & Integration Specification
 
-**Subsystem:** Member 4 — Portfolio & Career Readiness  
-**Author:** Daniel Lee  
-**Sprint:** Sprint 1  
-**Entity:** `Project` (`projects` table)  
+**Subsystem:** Member 4 — Portfolio & Career Readiness\
+**Author:** Daniel Lee\
+**Sprint:** Sprint 1\
+**Entity:** `Project` (`projects` table)\
 **Status:** Active
 
 ---
 
 ## 1. Overview & Purpose
 
-The `Project` model represents user-submitted portfolio items, evidence of work, and practical coding projects in CareerLM. It serves two core architectural functions:
+The `Project` model represents user-submitted portfolio items, evidence of work,
+and practical coding projects in CareerLM. It serves two core architectural
+functions:
 
-1. **Portfolio Showcase:** Allows users to catalog personal projects, repository links, descriptions, and demonstrated technical skills.
-2. **Readiness Evidence Engine:** Provides verified proof of competency that directly feeds into the user's **Career Readiness Score** and **Career Dashboard**.
+1. **Portfolio Showcase:** Allows users to catalog personal projects, repository
+   links, descriptions, and demonstrated technical skills.
+2. **Readiness Evidence Engine:** Provides verified proof of competency that
+   directly feeds into the user's **Career Readiness Score** and **Career
+   Dashboard**.
 
 ---
 
@@ -36,19 +41,23 @@ The `Project` model represents user-submitted portfolio items, evidence of work,
 ### 2.2 Performance Indexes
 
 - `idx_projects_user_id`: Optimizes lookups for `WHERE user_id = $1`.
-- `idx_projects_user_status`: Optimizes filtered queries for `WHERE user_id = $1 AND status = 'completed'`.
+- `idx_projects_user_status`: Optimizes filtered queries for
+  `WHERE user_id = $1 AND status = 'completed'`.
 
 ### 2.3 Multi-Tenant Isolation & Row Level Security (RLS)
 
 - Supabase RLS is enabled on `projects`.
-- All operations (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) enforce `auth.uid() = user_id`.
-- The Express application layer reinforces this constraint by binding `req.user.id` to every database query.
+- All operations (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) enforce
+  `auth.uid() = user_id`.
+- The Express application layer reinforces this constraint by binding
+  `req.user.id` to every database query.
 
 ---
 
 ## 3. Integration with Dashboard Features
 
-The Career Dashboard (`/dashboard`) queries the `projects` table for two primary widgets:
+The Career Dashboard (`/dashboard`) queries the `projects` table for two primary
+widgets:
 
 ### 3.1 Total Project Count Widget
 
@@ -61,7 +70,8 @@ The Career Dashboard (`/dashboard`) queries the `projects` table for two primary
   FROM projects
   WHERE user_id = :user_id;
   ```
-- **Dashboard Display:** Shows the user their total portfolio volume and completion ratio.
+- **Dashboard Display:** Shows the user their total portfolio volume and
+  completion ratio.
 
 ### 3.2 Recent Projects Activity Widget
 
@@ -88,7 +98,8 @@ The Career Dashboard (`/dashboard`) queries the `projects` table for two primary
 
 ## 4. Integration with Career Readiness Score Algorithm
 
-In the CareerLM MVP formula, the **Portfolio component represents 15%** of the user's total Career Readiness Score:
+In the CareerLM MVP formula, the **Portfolio component represents 15%** of the
+user's total Career Readiness Score:
 
 $$\text{Readiness Score} = \text{Skills (35\%)} + \text{Resume (20\%)} + \text{Roadmap (20\%)} + \mathbf{Portfolio (15\%)} + \text{Job Match (10\%)}$$
 
@@ -103,10 +114,14 @@ The scoring engine evaluates projects across three criteria:
    - 3+ projects = 100 pts.
 2. **Completion Quality (30% of Portfolio subscore):**
    - Completed projects (`status = 'completed'`) receive 100% weight.
-   - In-progress projects (`status = 'in_progress'`) receive 50% momentum weight.
+   - In-progress projects (`status = 'in_progress'`) receive 50% momentum
+     weight.
 3. **Skill Gap Coverage (40% of Portfolio subscore):**
-   - The scoring engine intersects `projects.skills_demonstrated` with the target role's missing skills (identified by Jim's Career Profile / William's Resume analyzer).
-   - Demonstrating a missing skill inside a completed project resolves the skill gap and boosts readiness.
+   - The scoring engine intersects `projects.skills_demonstrated` with the
+     target role's missing skills (identified by Jim's Career Profile /
+     William's Resume analyzer).
+   - Demonstrating a missing skill inside a completed project resolves the skill
+     gap and boosts readiness.
 
 ---
 

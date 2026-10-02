@@ -20,27 +20,46 @@ function bearerToken(header: string | undefined): string | null {
   return token;
 }
 
+async function authenticateRequest(req: Parameters<RequestHandler>[0]) {
+  const token = bearerToken(req.header("authorization"));
+  if (!token) return null;
+
+  const user = await getUserFromAccessToken(token);
+  if (!user?.id || !user.email) return null;
+
+  return {
+    id: user.id,
+    email: user.email,
+    ...(user.user_metadata?.name && typeof user.user_metadata.name === "string"
+      ? { name: user.user_metadata.name }
+      : {}),
+  };
+}
+
+export const optionalAuthentication: RequestHandler = async (
+  req,
+  _res,
+  next,
+) => {
+  try {
+    const user = await authenticateRequest(req);
+    if (user) req.user = user;
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const requireAuthentication: RequestHandler = async (
   req,
   _res,
   next,
 ) => {
   try {
-    const token = bearerToken(req.header("authorization"));
-    if (!token) return next(new AuthenticationError());
+    const user = await authenticateRequest(req);
+    if (!user) return next(new AuthenticationError());
 
-    const user = await getUserFromAccessToken(token);
-    if (!user?.id || !user.email) return next(new AuthenticationError());
-
-    req.user = {
-      id: user.id,
-      email: user.email,
-      ...(user.user_metadata?.name &&
-      typeof user.user_metadata.name === "string"
-        ? { name: user.user_metadata.name }
-        : {}),
-    };
-
+    req.user = user;
     next();
   } catch (error) {
     next(error);

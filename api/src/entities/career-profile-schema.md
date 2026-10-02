@@ -1,23 +1,30 @@
 # Career Profile Schema & Integration Specification
 
-**Subsystem:** Member 1 — Career Profile
-**Author:** Jim Alvarez
-**Sprint:** Sprint 1
-**Entity:** `CareerProfile` (`career_profiles` table)
-**Status:** Active
+**Subsystem:** Member 1 — Career Profile **Author:** Jim Alvarez **Sprint:**
+Sprint 1 **Entity:** `CareerProfile` (`career_profiles` table) **Status:**
+Active
 
 ---
 
 ## 1. Overview & Purpose
 
-The `CareerProfile` model captures a user's target career, experience level, skills, learning preferences, and weekly availability — collected once during onboarding (KAN-2) and persisted so other subsystems can read it without re-asking the user:
+The `CareerProfile` model captures a user's target career, experience level,
+skills, learning preferences, and weekly availability — collected once during
+onboarding (KAN-2) and persisted so other subsystems can read it without
+re-asking the user:
 
-- **Resume Intelligence** — compares extracted resume skills against `skills` and `target_career` to surface gaps.
-- **Job Intelligence** — matches job listings against `target_career` and `skills`.
-- **Portfolio & Career Readiness** — combines `skills` with `projects.skills_demonstrated` to compute skill-gap coverage in the Career Readiness Score.
-- **Roadmap** — uses `experience_level`, `learning_preferences`, and `weekly_availability_hours` to pace generated learning plans.
+- **Resume Intelligence** — compares extracted resume skills against `skills`
+  and `target_career` to surface gaps.
+- **Job Intelligence** — matches job listings against `target_career` and
+  `skills`.
+- **Portfolio & Career Readiness** — combines `skills` with
+  `projects.skills_demonstrated` to compute skill-gap coverage in the Career
+  Readiness Score.
+- **Roadmap** — uses `experience_level`, `learning_preferences`, and
+  `weekly_availability_hours` to pace generated learning plans.
 
-Each user has **at most one** Career Profile (one-to-one), unlike `projects`, which is one-to-many.
+Each user has **at most one** Career Profile (one-to-one), unlike `projects`,
+which is one-to-many.
 
 ---
 
@@ -39,13 +46,18 @@ Each user has **at most one** Career Profile (one-to-one), unlike `projects`, wh
 
 ### 2.2 Performance Indexes
 
-- `idx_career_profiles_user_id`: optimizes lookups for `WHERE user_id = $1`, and joins from other subsystems (Resume, Job, Portfolio) keying off the same `user_id`.
+- `idx_career_profiles_user_id`: optimizes lookups for `WHERE user_id = $1`, and
+  joins from other subsystems (Resume, Job, Portfolio) keying off the same
+  `user_id`.
 
 ### 2.3 Multi-Tenant Isolation & Row Level Security (RLS)
 
 - Supabase RLS is enabled on `career_profiles`.
-- All operations (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) enforce `auth.uid() = user_id`.
-- The Express application layer reinforces this constraint by binding `req.user.id` to every database query (see `careerProfileRepository` in KAN-4/KAN-5).
+- All operations (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) enforce
+  `auth.uid() = user_id`.
+- The Express application layer reinforces this constraint by binding
+  `req.user.id` to every database query (see `careerProfileRepository` in
+  KAN-4/KAN-5).
 
 ---
 
@@ -62,11 +74,14 @@ Every field on this entity maps 1:1 to `OnboardingFormData`
 | `learningPreferences`     | `learning_preferences`      |
 | `weeklyAvailabilityHours` | `weekly_availability_hours` |
 
-The API uses the snake_case column names (matching `CreateCareerProfileDto` and the projects API), so the frontend maps its camelCase form fields to them when submitting.
+The API uses the snake_case column names (matching `CreateCareerProfileDto` and
+the projects API), so the frontend maps its camelCase form fields to them when
+submitting.
 
 ### 3.1 `POST /api/career-profile` (KAN-4)
 
-Requires an authenticated session. Creates the current user's Career Profile, or replaces it if one already exists (one profile per user). This same upsert is what the profile edit flow (`/profile/edit`, C40CS-8) calls to save changes — there is no separate update endpoint.
+Requires an authenticated session. Creates the current user's Career Profile, or
+replaces it if one already exists (one profile per user).
 
 Request body:
 
@@ -91,13 +106,18 @@ Validation rules (the onboarding form enforces the same limits):
 
 - `target_career`: required, 1–100 characters after trimming.
 - `experience_level`: one of the allowed values.
-- `skills`: 1–30 non-empty strings, each up to 50 characters. Values are trimmed and duplicates removed case-insensitively, keeping the first spelling (`["React", "react"]` → `["React"]`).
-- `learning_preferences`: at least one of the allowed values; duplicates removed.
+- `skills`: 1–30 non-empty strings, each up to 50 characters. Values are trimmed
+  and duplicates removed case-insensitively, keeping the first spelling
+  (`["React", "react"]` → `["React"]`).
+- `learning_preferences`: at least one of the allowed values; duplicates
+  removed.
 - `weekly_availability_hours`: a whole number from 1 to 168.
 
 ### 3.2 `GET /api/career-profile` (KAN-5)
 
-Requires an authenticated session. Returns the current user's Career Profile. Other subsystems (Resume, Job, Portfolio, Roadmap) should read the profile through this endpoint rather than querying `career_profiles` directly.
+Requires an authenticated session. Returns the current user's Career Profile.
+Other subsystems (Resume, Job, Portfolio, Roadmap) should read the profile
+through this endpoint rather than querying `career_profiles` directly.
 
 | Status | When           | Body                                                                      |
 | :----- | :------------- | :------------------------------------------------------------------------ |
@@ -105,7 +125,9 @@ Requires an authenticated session. Returns the current user's Career Profile. Ot
 | `200`  | No profile yet | `{ success: true, data: null, meta: { timestamp } }`                      |
 | `401`  | Not signed in  | `{ success: false, error: { code: "AUTHENTICATION_REQUIRED", message } }` |
 
-Having no profile yet is a normal state for a new user, not an error, so it returns `200` with `data: null` instead of `404`. Check `data === null` to send the user to onboarding.
+Having no profile yet is a normal state for a new user, not an error, so it
+returns `200` with `data: null` instead of `404`. Check `data === null` to send
+the user to onboarding.
 
 Example `data` when a profile exists:
 

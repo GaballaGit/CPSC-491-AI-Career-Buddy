@@ -9,7 +9,9 @@ export default function SignOutPage() {
   const router = useRouter();
 
   useEffect(() => {
-    void getSupabaseClient().auth.signOut().finally(() => router.replace("/signin"));
+    void getSupabaseClient().auth.signOut().finally(() =>
+      router.replace("/signin")
+    );
   }, [router]);
 
   return (

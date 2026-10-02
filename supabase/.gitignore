@@ -6,3 +6,6 @@
 .env.keys
 .env.local
 .env.*.local
+
+# Local function secrets (LLM_API_KEY etc.)
+functions/.env

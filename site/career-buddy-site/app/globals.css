@@ -126,6 +126,17 @@ a {
   font-size: 0.78rem;
   padding: 6px 10px;
 }
+.match-score {
+  align-self: flex-start;
+  background: #e4f4ea;
+  border: 1px solid #b9dfc8;
+  border-radius: 999px;
+  color: #23563d;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin: 0 0 16px;
+  padding: 6px 10px;
+}
 .card-link {
   color: var(--accent);
   font-size: 0.85rem;
@@ -136,6 +147,21 @@ a {
 .notice {
   color: var(--muted);
   padding: 32px 0;
+}
+.notice.compact {
+  padding: 4px 0;
+}
+.prompt {
+  background: #fff8e6;
+  border: 1px solid #f0dfad;
+  border-radius: 14px;
+  margin: 0 0 24px;
+  padding: 14px 16px;
+}
+.prompt a {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: underline;
 }
 .error {
   color: #a63d32;
@@ -164,6 +190,31 @@ a {
   font-size: 1.2rem;
   margin-top: 48px;
 }
+.detail h3 {
+  font-size: 1rem;
+  margin: 0 0 12px;
+}
 .detail .skills {
   margin-top: 16px;
+}
+.detail-score {
+  display: inline-block;
+  margin-top: 8px;
+}
+.match-breakdown {
+  border-top: 1px solid var(--line);
+  margin-top: 48px;
+}
+.match-columns {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.success-skills .skill {
+  background: #e4f4ea;
+  color: #23563d;
+}
+.missing-skills .skill {
+  background: #fdecea;
+  color: #9f2f24;
 }

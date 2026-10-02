@@ -5,18 +5,25 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ApiError,
+  type CareerProfile,
   getCareerProfile,
   saveCareerProfile,
   SIGN_IN_URL,
-  type CareerProfile,
 } from "../../../lib/careerProfile";
 import { getResumeSkills } from "../../../lib/resumeSkills";
 import {
   EXPERIENCE_LEVELS,
   LEARNING_PREFERENCES,
 } from "../../onboarding/options";
-import { LIMITS, validateNewSkill, validateStep } from "../../onboarding/validation";
-import type { LearningPreference, OnboardingFormData } from "../../onboarding/types";
+import {
+  LIMITS,
+  validateNewSkill,
+  validateStep,
+} from "../../onboarding/validation";
+import type {
+  LearningPreference,
+  OnboardingFormData,
+} from "../../onboarding/types";
 
 type LoadState =
   | { status: "loading" }
@@ -122,8 +129,9 @@ export default function EditProfilePage() {
         } else {
           setState({
             status: "error",
-            message:
-              error instanceof Error ? error.message : "Something went wrong.",
+            message: error instanceof Error
+              ? error.message
+              : "Something went wrong.",
           });
         }
       }
@@ -267,12 +275,14 @@ export default function EditProfilePage() {
               maxLength={LIMITS.targetCareerMaxLength}
               aria-invalid={fieldErrors.targetCareer !== undefined}
               onChange={(e) =>
-                update((prev) => ({ ...prev, targetCareer: e.target.value }))
-              }
+                update((prev) => ({ ...prev, targetCareer: e.target.value }))}
               className={inputClass}
             />
             {fieldErrors.targetCareer && (
-              <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              <p
+                role="alert"
+                className="text-sm text-red-600 dark:text-red-400"
+              >
                 {fieldErrors.targetCareer}
               </p>
             )}
@@ -298,15 +308,17 @@ export default function EditProfilePage() {
                     value={value}
                     checked={formData.experienceLevel === value}
                     onChange={() =>
-                      update((prev) => ({ ...prev, experienceLevel: value }))
-                    }
+                      update((prev) => ({ ...prev, experienceLevel: value }))}
                   />
                   <span className="text-black dark:text-zinc-50">{label}</span>
                 </label>
               ))}
             </div>
             {fieldErrors.experienceLevel && (
-              <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              <p
+                role="alert"
+                className="text-sm text-red-600 dark:text-red-400"
+              >
                 {fieldErrors.experienceLevel}
               </p>
             )}
@@ -348,12 +360,18 @@ export default function EditProfilePage() {
               </button>
             </div>
             {skillError && (
-              <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              <p
+                role="alert"
+                className="text-sm text-red-600 dark:text-red-400"
+              >
                 {skillError}
               </p>
             )}
             {fieldErrors.skills && (
-              <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              <p
+                role="alert"
+                className="text-sm text-red-600 dark:text-red-400"
+              >
                 {fieldErrors.skills}
               </p>
             )}
@@ -428,7 +446,10 @@ export default function EditProfilePage() {
               </label>
             ))}
             {fieldErrors.learningPreferences && (
-              <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              <p
+                role="alert"
+                className="text-sm text-red-600 dark:text-red-400"
+              >
                 {fieldErrors.learningPreferences}
               </p>
             )}
@@ -452,14 +473,17 @@ export default function EditProfilePage() {
               onChange={(e) =>
                 update((prev) => ({
                   ...prev,
-                  weeklyAvailabilityHours:
-                    e.target.value === "" ? "" : Number(e.target.value),
-                }))
-              }
+                  weeklyAvailabilityHours: e.target.value === ""
+                    ? ""
+                    : Number(e.target.value),
+                }))}
               className={inputClass}
             />
             {fieldErrors.weeklyAvailabilityHours && (
-              <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+              <p
+                role="alert"
+                className="text-sm text-red-600 dark:text-red-400"
+              >
                 {fieldErrors.weeklyAvailabilityHours}
               </p>
             )}
@@ -471,32 +495,34 @@ export default function EditProfilePage() {
             role="alert"
             className="mt-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-200"
           >
-            {submitError.status === 401 ? (
-              <p>
-                You need to sign in to save changes.{" "}
-                <a
-                  href={SIGN_IN_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium underline"
-                >
-                  Sign in
-                </a>{" "}
-                in a new tab, then press Save changes again. Your edits are
-                kept.
-              </p>
-            ) : (
-              <>
-                <p>Couldn&apos;t save your changes. {submitError.message}</p>
-                {submitError.details.length > 0 && (
-                  <ul className="mt-1 list-disc pl-5">
-                    {submitError.details.map((detail) => (
-                      <li key={detail.field}>{detail.message}</li>
-                    ))}
-                  </ul>
-                )}
-              </>
-            )}
+            {submitError.status === 401
+              ? (
+                <p>
+                  You need to sign in to save changes.{" "}
+                  <a
+                    href={SIGN_IN_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium underline"
+                  >
+                    Sign in
+                  </a>{" "}
+                  in a new tab, then press Save changes again. Your edits are
+                  kept.
+                </p>
+              )
+              : (
+                <>
+                  <p>Couldn&apos;t save your changes. {submitError.message}</p>
+                  {submitError.details.length > 0 && (
+                    <ul className="mt-1 list-disc pl-5">
+                      {submitError.details.map((detail) => (
+                        <li key={detail.field}>{detail.message}</li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
           </div>
         )}
 

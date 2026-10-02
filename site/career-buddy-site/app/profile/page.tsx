@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ApiError,
+  type CareerProfile,
   getCareerProfile,
   SIGN_IN_URL,
-  type CareerProfile,
 } from "../../lib/careerProfile";
 import { EXPERIENCE_LEVELS, LEARNING_PREFERENCES } from "../onboarding/options";
 import type { ExperienceLevel, LearningPreference } from "../onboarding/types";
@@ -63,8 +63,9 @@ export default function ProfilePage() {
         } else {
           setState({
             status: "error",
-            message:
-              error instanceof Error ? error.message : "Something went wrong.",
+            message: error instanceof Error
+              ? error.message
+              : "Something went wrong.",
           });
         }
       }

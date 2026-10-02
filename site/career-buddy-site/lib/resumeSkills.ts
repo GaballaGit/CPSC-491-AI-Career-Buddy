@@ -23,7 +23,7 @@ export async function getResumeSkills(): Promise<string[]> {
       .map((skill) =>
         typeof skill === "object" && skill !== null && "name" in skill
           ? String((skill as { name: unknown }).name)
-          : null,
+          : null
       )
       .filter((name): name is string => name !== null);
   } catch {
