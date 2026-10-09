@@ -141,6 +141,35 @@ Deno.test("DOCX upload returns extracted text", async () => {
   );
 });
 
+Deno.test("all protected resume routes reject missing and malformed auth", async () => {
+  const routes: Request[] = [
+    new Request("http://localhost/resume", {
+      method: "POST",
+      body: new FormData(),
+    }),
+    new Request("http://localhost/resume/skills"),
+    new Request("http://localhost/resume/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: "resume text" }),
+    }),
+  ];
+
+  for (const template of routes) {
+    for (
+      const authorization of [undefined, "Basic invalid", "Bearer invalid"]
+    ) {
+      const { handler } = fakeDeps(null);
+      const headers = new Headers(template.headers);
+      if (authorization) headers.set("Authorization", authorization);
+      const res = await handler(new Request(template.clone(), { headers }));
+      const body = await res.json();
+      strictEqual(res.status, 401);
+      strictEqual(body.error.code, "AUTHENTICATION_REQUIRED");
+    }
+  }
+});
+
 Deno.test("upload while signed out is 401", async () => {
   const { handler, rows } = fakeDeps(null);
 
