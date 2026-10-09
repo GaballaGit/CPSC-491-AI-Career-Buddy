@@ -70,7 +70,7 @@ the matchers: a rounded percentage, or 100 when there are no required skills.
 
 **Owner:** Jim Alvarez.
 
-Stored as plain display-name strings, normalized with `normalizeSkills` on save (`POST /api/career-profile`):
+Stored as plain display-name strings, normalized with `normalizeSkills` on save (`POST /profile` Edge Function since C40CS-32; the legacy `POST /api/career-profile` Express route behaves the same):
 
 ```ts
 // career_profiles.skills: text[]
@@ -80,7 +80,7 @@ interface CareerProfile {
 }
 ```
 
-Source: `api/src/entities/careerProfile.ts`, `api/src/entities/career-profile-schema.md`.
+Source: `supabase/functions/_shared/profile/` (validation and repository), `api/src/entities/careerProfile.ts`, `api/src/entities/career-profile-schema.md`.
 
 ## Resume-derived skills
 

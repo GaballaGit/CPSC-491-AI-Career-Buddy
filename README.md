@@ -61,9 +61,9 @@ guides. See `docs/database.md` for server-only Supabase credentials and
 `docs/deployment.md` for frontend variables and Edge Function secrets. Never
 expose service-role or AI credentials to the browser.
 
-Career Profile calls use the `API_URL` rewrite; project calls use
-`NEXT_PUBLIC_API_URL`. These are currently separate configuration paths, not
-aliases. See `docs/architecture.md` for runtime boundaries and known gaps.
+Career Profile calls the `profile` Edge Function at
+`NEXT_PUBLIC_SUPABASE_URL`; project calls still go to the Express API at
+`NEXT_PUBLIC_API_URL`. See `docs/architecture.md` for runtime boundaries and known gaps.
 
 ## CI
 
