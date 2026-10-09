@@ -10,7 +10,7 @@ import type {
   CareerProfile,
   CreateCareerProfileDto,
 } from "../entities/index.js";
-import { compareSkills, mergeSkillSources } from "../utils/skillGap.js";
+import { compareSkills, mergeSkillSources } from "../utils/skills.js";
 import { normalizeSkill, normalizeSkills } from "../utils/skills.js";
 
 // Auth and the database are replaced with in-memory fakes so the tests don't

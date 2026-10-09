@@ -10,20 +10,16 @@ import {
   saveCareerProfile,
   SIGN_IN_URL,
 } from "../../../lib/careerProfile";
-import { getResumeSkills } from "../../../lib/resumeSkills";
+import { getResumeSkills } from "../../../lib/resume";
 import {
   EXPERIENCE_LEVELS,
   LEARNING_PREFERENCES,
-} from "../../onboarding/options";
-import {
   LIMITS,
   validateNewSkill,
   validateStep,
-} from "../../onboarding/validation";
-import type {
-  LearningPreference,
-  OnboardingFormData,
-} from "../../onboarding/types";
+  type LearningPreference,
+  type OnboardingFormData,
+} from "../../../lib/careerProfileForm";
 
 type LoadState =
   | { status: "loading" }

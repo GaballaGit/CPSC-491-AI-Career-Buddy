@@ -64,7 +64,7 @@ which is one-to-many.
 ## 3. Relationship to the Onboarding Questionnaire (KAN-2)
 
 Every field on this entity maps 1:1 to `OnboardingFormData`
-(`site/career-buddy-site/app/onboarding/types.ts`):
+(`site/career-buddy-site/lib/careerProfileForm.ts`):
 
 | Onboarding form field     | `career_profiles` column    |
 | :------------------------ | :-------------------------- |

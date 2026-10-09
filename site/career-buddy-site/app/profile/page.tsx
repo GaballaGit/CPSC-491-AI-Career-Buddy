@@ -8,8 +8,12 @@ import {
   getCareerProfile,
   SIGN_IN_URL,
 } from "../../lib/careerProfile";
-import { EXPERIENCE_LEVELS, LEARNING_PREFERENCES } from "../onboarding/options";
-import type { ExperienceLevel, LearningPreference } from "../onboarding/types";
+import {
+  EXPERIENCE_LEVELS,
+  LEARNING_PREFERENCES,
+  type ExperienceLevel,
+  type LearningPreference,
+} from "../../lib/careerProfileForm";
 
 type LoadState =
   | { status: "loading" }

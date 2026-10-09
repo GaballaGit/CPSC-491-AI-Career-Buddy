@@ -84,6 +84,32 @@ describe("computeJobSkillMatch", () => {
     assert.equal(match.score, 100);
   });
 
+  it("preserves requirement spelling and order, drops blanks, and rounds scores", () => {
+    const input = {
+      requiredSkills: requiredSkills(" ", "GraphQL", "graphql", "js", "SQL"),
+      profileSkills: ["sql", "JS"],
+    };
+    const original = structuredClone(input);
+
+    assert.deepEqual(computeJobSkillMatch(input), {
+      matched: [
+        { name: "JavaScript", key: "javascript" },
+        { name: "SQL", key: "sql" },
+      ],
+      missing: [{ name: "GraphQL", key: "graphql" }],
+      score: 67,
+    });
+    assert.deepEqual(input, original);
+    assert.deepEqual(
+      computeJobSkillMatch({ requiredSkills: requiredSkills(" ") }),
+      {
+        matched: [],
+        missing: [],
+        score: 100,
+      },
+    );
+  });
+
   it("handles jobs with no required skills without dividing by zero", () => {
     const match = computeJobSkillMatch({
       requiredSkills: [],

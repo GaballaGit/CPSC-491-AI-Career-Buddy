@@ -7,8 +7,7 @@ import Card from "../../components/ui/Card";
 import PageHeader from "../../components/ui/PageHeader";
 import { getCareerProfile, type CareerProfile } from "../../lib/careerProfile";
 import { getProjects } from "../../lib/projects";
-import { EXPERIENCE_LEVELS } from "../onboarding/options";
-import type { ExperienceLevel } from "../onboarding/types";
+import { EXPERIENCE_LEVELS, type ExperienceLevel } from "../../lib/careerProfileForm";
 
 function experienceLabel(value: ExperienceLevel): string {
   return (

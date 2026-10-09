@@ -46,6 +46,159 @@ describe("Portfolio project API", () => {
     });
   });
 
+  describe("validation contract", () => {
+    const valid = {
+      title: "CareerLM",
+      description: "Test project",
+      skills_demonstrated: ["TypeScript"],
+    };
+    const cases: Array<{
+      input: Record<string, unknown>;
+      field?: string;
+      message: string;
+    }> = [
+      {
+        input: { title: 1 },
+        field: "title",
+        message: "Project title must be a string.",
+      },
+      {
+        input: { title: " ab " },
+        field: "title",
+        message: "Project title must be between 3 and 100 characters.",
+      },
+      {
+        input: { title: "x".repeat(101) },
+        field: "title",
+        message: "Project title must be between 3 and 100 characters.",
+      },
+      {
+        input: { description: null },
+        field: "description",
+        message: "Project description must be a string.",
+      },
+      {
+        input: { description: "  " },
+        field: "description",
+        message: "Project description cannot be empty.",
+      },
+      {
+        input: { skills_demonstrated: [""] },
+        field: "skills_demonstrated",
+        message: "skills_demonstrated must be an array of non-empty strings.",
+      },
+      {
+        input: { skills_demonstrated: null },
+        field: "skills_demonstrated",
+        message: "skills_demonstrated must be an array of non-empty strings.",
+      },
+      {
+        input: { project_urls: [1] },
+        field: "project_urls",
+        message: "project_urls must be an array of non-empty strings.",
+      },
+      {
+        input: { status: "unknown" },
+        field: "status",
+        message: 'Project status must be either "in_progress" or "completed".',
+      },
+    ];
+
+    for (const method of ["post", "patch"] as const) {
+      for (const { input, field, message } of cases) {
+        it(`${method} preserves validation for ${JSON.stringify(input)}`, async () => {
+          const expectedMessage =
+            method === "post" && input.title === 1
+              ? "Project title is required."
+              : method === "post" && input.description === null
+                ? "Project description is required."
+                : message;
+          const agent = request(app);
+          const response = await agent[method](
+            method === "post"
+              ? "/api/projects"
+              : `/api/projects/${sampleProject.id}`,
+          )
+            .set("Authorization", `Bearer ${authToken}`)
+            .send({ ...valid, ...input });
+          expect(response.status).toBe(400);
+          expect(response.body).toEqual({
+            success: false,
+            error: {
+              code: "VALIDATION_ERROR",
+              message: expectedMessage,
+              details: [{ field, message: expectedMessage }],
+            },
+          });
+          expect(projectRepository.create).not.toHaveBeenCalled();
+          expect(projectRepository.update).not.toHaveBeenCalled();
+        });
+      }
+
+      it(`${method} rejects non-object bodies with empty details`, async () => {
+        const agent = request(app);
+        const response = await agent[method](
+          method === "post"
+            ? "/api/projects"
+            : `/api/projects/${sampleProject.id}`,
+        )
+          .set("Authorization", `Bearer ${authToken}`)
+          .send([]);
+        expect(response.status).toBe(400);
+        expect(response.body).toEqual({
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Request body must be a JSON object.",
+            details: [],
+          },
+        });
+      });
+    }
+
+    it("reports the first invalid field and rejects an unknown-only update", async () => {
+      const create = await request(app)
+        .post("/api/projects")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({ title: "", description: "", status: "bad" });
+      expect(create.body.error.details[0].field).toBe("title");
+      const update = await request(app)
+        .patch(`/api/projects/${sampleProject.id}`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({ user_id: "other" });
+      expect(update.body).toEqual({
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "At least one project field must be provided for update.",
+          details: [],
+        },
+      });
+    });
+
+    it("accepts empty skill/URL arrays, trims fields, and ignores ownership input", async () => {
+      vi.mocked(projectRepository.create).mockResolvedValue(sampleProject);
+      const response = await request(app)
+        .post("/api/projects")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          title: " abc ",
+          description: " test ",
+          skills_demonstrated: [],
+          project_urls: [],
+          user_id: "other",
+        });
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual({ data: sampleProject });
+      expect(projectRepository.create).toHaveBeenCalledWith(userId, {
+        title: "abc",
+        description: "test",
+        skills_demonstrated: [],
+        project_urls: [],
+      });
+    });
+  });
+
   describe("POST /api/projects", () => {
     it("creates a project for the authenticated user", async () => {
       vi.mocked(projectRepository.create).mockResolvedValue(sampleProject);
@@ -311,6 +464,7 @@ describe("Portfolio project API", () => {
         .set("Authorization", `Bearer ${authToken}`);
 
       expect(response.status).toBe(204);
+      expect(response.text).toBe("");
 
       expect(projectRepository.delete).toHaveBeenCalledWith(
         userId,

@@ -6,9 +6,12 @@ import {
   initialOnboardingFormData,
   type LearningPreference,
   type OnboardingFormData,
-} from "./types";
-import { EXPERIENCE_LEVELS, LEARNING_PREFERENCES } from "./options";
-import { LIMITS, validateNewSkill, validateStep } from "./validation";
+  EXPERIENCE_LEVELS,
+  LEARNING_PREFERENCES,
+  LIMITS,
+  validateNewSkill,
+  validateStep,
+} from "../../lib/careerProfileForm";
 import {
   ApiError,
   saveCareerProfile,

@@ -43,10 +43,12 @@ Folders that start with `_` are never deployed as functions.
 
 ## Auth
 
-`verify_jwt = true` in `config.toml`: the Supabase gateway rejects requests
-without a valid JWT (anon key or a signed-in user's token) before the function
-runs. Call functions from the frontend with `supabase.functions.invoke()`, which
-sends the token for you.
+`config.toml` keeps `verify_jwt = true` for jobs. Resume uses
+`verify_jwt = false` so `GET /resume/health` can be public; upload, saved skills,
+and feedback still require handler-level user authentication. Do not treat the
+public health exception as permission to bypass authentication on private routes.
+The resume frontend uses `supabase.functions.invoke()`, which sends the session
+token. The jobs frontend constructs authenticated or anonymous headers explicitly.
 
 The anon key alone is not a user. Use `authenticate(req)` from
 `_shared/auth.ts`: it returns `{ userId, db }` for a signed-in user or `null`
@@ -82,7 +84,7 @@ deno lint supabase/functions
 
 | Route               | Function             | Status                                                                                                           |
 | ------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `POST /api/resumes` | `POST /resume`       | Migrated. Express route deprecated; frontend switches after C40CS-15 deploys the function.                       |
+| `POST /api/resumes` | `POST /resume`       | Migrated. Frontend calls the Edge Function; Express route remains as a legacy endpoint.                       |
 | —                   | `GET /resume/skills` | New in C40CS-12: current user's saved resume skills.                                                             |
 | `GET /api/jobs`     | `GET /jobs`          | Migrated in C40CS-20. Frontend calls the Edge Function directly; Express route remains as a deprecated fallback. |
 | `GET /api/jobs/:id` | `GET /jobs/:id`      | Migrated in C40CS-20 with optional match metadata for signed-in users.                                           |

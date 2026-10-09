@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 
-import { getResumeFeedback, ResumeRequestError } from "../../lib/resume";
-import type { ResumeFeedback } from "./types";
+import {
+  getResumeFeedback,
+  ResumeRequestError,
+  type ResumeFeedback,
+} from "../../lib/resume";
 
 const SECTIONS: Array<{ key: keyof ResumeFeedback; title: string }> = [
   { key: "strengths", title: "Strengths" },

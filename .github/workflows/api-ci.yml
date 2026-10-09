@@ -86,3 +86,7 @@ jobs:
       - name: Type check
         if: steps.detect.outputs.found == 'true'
         run: deno check supabase/functions/*/index.ts
+
+      - name: Tests
+        if: steps.detect.outputs.found == 'true'
+        run: deno test --allow-read --allow-env --allow-net supabase/functions

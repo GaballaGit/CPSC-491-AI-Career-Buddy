@@ -1,5 +1,6 @@
 import type { RequiredSkill } from "./repository.ts";
 import {
+  compareSkills,
   normalizeSkills,
   type Skill,
 } from "../../../../api/src/utils/skills.ts";
@@ -21,10 +22,7 @@ export function computeJobSkillMatch({
 }: JobSkillMatchInput): JobSkillMatch {
   const required = normalizeSkills(requiredSkills.map((skill) => skill.name));
   const known = normalizeSkills(profileSkills);
-  const knownKeys = new Set(known.map((skill) => skill.key));
-
-  const matched = required.filter((skill) => knownKeys.has(skill.key));
-  const missing = required.filter((skill) => !knownKeys.has(skill.key));
+  const { matched, missing } = compareSkills(known, required);
   const score = required.length === 0
     ? 100
     : Math.round((matched.length / required.length) * 100);

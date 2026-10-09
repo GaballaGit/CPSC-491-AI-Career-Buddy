@@ -15,7 +15,7 @@ async function authHeaders(): Promise<Record<string, string>> {
 }
 ```
 
-Both backends turn that token into the current user the same way — verify it against Supabase Auth, 401 if it's missing or invalid:
+Both backends verify user tokens against Supabase Auth. Private operations require a valid user; jobs permit anonymous access without personal match data:
 
 - **Express** (`api/src/middleware/authentication.ts`): `requireAuthentication` reads the header, calls `getUserFromAccessToken` (`api/src/auth/supabase.ts`), and sets `req.user: { id, email, name? }`. Tests set `process.env.SUPABASE_AUTH_TEST_USERS` instead of hitting real Supabase.
 - **Edge Functions** (`supabase/functions/_shared/auth.ts`): `authenticate(req)` returns `{ userId, db } | null`, where `db` is a Supabase client scoped to that user's JWT so Postgres Row Level Security applies automatically.
@@ -40,7 +40,7 @@ function normalizeSkills(inputs: readonly string[]): Skill[]; // dedupes by key
 ```
 
 ```ts
-// api/src/utils/skillGap.ts (C40CS-7, PR #52)
+// api/src/utils/skills.ts
 type SkillSource = "profile" | "resume" | "project";
 interface SourcedSkill extends Skill {
   source: SkillSource;
@@ -62,7 +62,9 @@ function mergeSkillSources(
 
 `compareSkills` is meant to be the single comparison used everywhere a "known vs. required" skill gap is needed (Job Matching now; the roadmap later) — subsystems should not reimplement matched/missing logic themselves.
 
-**Known gap:** `api/src/services/jobMatching.ts` (`computeJobSkillMatch`, C40CS-17) currently computes matched/missing/score with its own inline logic, predating `compareSkills`. It's functionally equivalent but is a duplicate implementation. Worth switching over to `compareSkills` once C40CS-7 merges — flagged here, not changed by this doc (Job Matching is Mark's subsystem).
+Both `api/src/services/jobMatching.ts` and the Edge jobs matcher normalize their
+inputs and use `compareSkills` for matched/missing results. Scoring remains in
+the matchers: a rounded percentage, or 100 when there are no required skills.
 
 ## Career Profile skill data
 
@@ -131,11 +133,11 @@ function computeJobSkillMatch(input: {
 }): JobSkillMatch;
 ```
 
-**Status:** `computeJobSkillMatch` exists and is unit-tested but isn't wired into a route yet — no endpoint currently returns a match response (that's C40CS-18, "Display match info").
+**Status:** Both the Express jobs routes and the jobs Edge Function return match data for signed-in users with a Career Profile. Route matching currently uses profile skills only; the Express matching service also supports optional resume skills for direct callers.
 
 ## Portfolio skill evidence
 
-**Owner:** Daniel Lee (C40CS-23, PR #49 as of writing — not yet merged).
+**Owner:** Daniel Lee (C40CS-23, implemented).
 
 ```ts
 // projects.skills_demonstrated: text[], normalized with normalizeSkills on create/update
@@ -153,9 +155,15 @@ function getCompletedProjectSkills(projects: readonly Project[]): Skill[];
 
 Only `completed` projects count as skill evidence. When merged with profile/resume skills via `mergeSkillSources`, these use `source: "project"`.
 
+Project create/read/update routes currently return `{ data }`, not the common
+success envelope below; deletes return an empty 204. Project not-found errors
+use `PROJECT_NOT_FOUND`. The frontend project client requires `success: true`,
+an existing integration mismatch that must be addressed separately from a
+behavior-preserving refactor.
+
 ## Common API/function response and error envelope
 
-**Owner:** Platform / Shared. Identical shape on both backends — Express (`api/src/types/response.ts`, `error.ts`) and Edge Functions (`supabase/functions/_shared/http.ts`).
+**Owner:** Platform / Shared. Common shape used by Edge Functions (`supabase/functions/_shared/http.ts`) and described by Express types (`api/src/types/response.ts`, `error.ts`). Some Express routes, including projects as noted above, do not use this success envelope.
 
 ```ts
 interface ApiSuccessResponse<T> {

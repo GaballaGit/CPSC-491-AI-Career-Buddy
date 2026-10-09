@@ -1,5 +1,5 @@
 import type { RequiredSkill } from "../entities/job.js";
-import { normalizeSkills, type Skill } from "../utils/skills.js";
+import { compareSkills, normalizeSkills, type Skill } from "../utils/skills.js";
 
 export interface JobSkillMatchInput {
   requiredSkills: readonly RequiredSkill[];
@@ -28,10 +28,7 @@ export function computeJobSkillMatch({
 }: JobSkillMatchInput): JobSkillMatch {
   const required = normalizeSkills(requiredSkills.map((skill) => skill.name));
   const known = normalizeSkills([...profileSkills, ...resumeSkills]);
-  const knownKeys = new Set(known.map((skill) => skill.key));
-
-  const matched = required.filter((skill) => knownKeys.has(skill.key));
-  const missing = required.filter((skill) => !knownKeys.has(skill.key));
+  const { matched, missing } = compareSkills(known, required);
   const score =
     required.length === 0
       ? 100

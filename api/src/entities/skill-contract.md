@@ -59,7 +59,7 @@ check are set up in C40CS-10 and C40CS-11.
 
 ## Skill gaps and comparison (C40CS-7)
 
-Code: `api/src/utils/skillGap.ts`. This is the single comparison used across
+Code: `api/src/utils/skills.ts`. This is the single comparison used across
 subsystems (Job Matching, and later the roadmap) — do not re-implement it.
 
 ```ts

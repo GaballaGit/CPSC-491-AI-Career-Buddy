@@ -30,8 +30,9 @@
           npm-check-updates
           wrangler
 
-          terraform
-          terraform-ls
+          # unused rn
+          #terraform
+          #terraform-ls
           tflint
           awscli2
           supabase-cli
