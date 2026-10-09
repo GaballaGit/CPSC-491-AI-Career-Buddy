@@ -28,18 +28,36 @@ export class ApiError extends Error {
   }
 }
 
-// Same-origin path: next.config.ts proxies /api to the Express server.
-const ENDPOINT = "/api/career-profile";
+// Career Profile Edge Function (C40CS-32), called directly like jobs.
+function profileFunctionUrl(): string {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl) {
+    throw new ApiError(
+      "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL.",
+      0,
+    );
+  }
+  return `${supabaseUrl}/functions/v1/profile`;
+}
 
 async function request<T>(init?: RequestInit): Promise<T> {
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!anonKey) {
+    throw new ApiError(
+      "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+      0,
+    );
+  }
+
   const headers = new Headers(init?.headers);
+  headers.set("apikey", anonKey);
   for (const [key, value] of Object.entries(await authHeaders())) {
     headers.set(key, value);
   }
 
   let response: Response;
   try {
-    response = await fetch(ENDPOINT, {
+    response = await fetch(profileFunctionUrl(), {
       cache: "no-store",
       ...init,
       headers,

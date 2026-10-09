@@ -43,12 +43,13 @@ Folders that start with `_` are never deployed as functions.
 
 ## Auth
 
-`config.toml` keeps `verify_jwt = true` for jobs. Resume uses
+`config.toml` keeps `verify_jwt = true` for jobs and profile. Resume uses
 `verify_jwt = false` so `GET /resume/health` can be public; upload, saved skills,
 and feedback still require handler-level user authentication. Do not treat the
 public health exception as permission to bypass authentication on private routes.
 The resume frontend uses `supabase.functions.invoke()`, which sends the session
-token. The jobs frontend constructs authenticated or anonymous headers explicitly.
+token. The jobs and profile frontends construct headers explicitly (`apikey` plus
+the user's token; jobs falls back to the anon key when signed out).
 
 The anon key alone is not a user. Use `authenticate(req)` from
 `_shared/auth.ts`: it returns `{ userId, db }` for a signed-in user or `null`
@@ -88,3 +89,5 @@ deno lint supabase/functions
 | —                   | `GET /resume/skills` | New in C40CS-12: current user's saved resume skills.                                                             |
 | `GET /api/jobs`     | `GET /jobs`          | Migrated in C40CS-20. Frontend calls the Edge Function directly; Express route remains as a deprecated fallback. |
 | `GET /api/jobs/:id` | `GET /jobs/:id`      | Migrated in C40CS-20 with optional match metadata for signed-in users.                                           |
+| `GET /api/career-profile`  | `GET /profile`  | Migrated in C40CS-32. Signed-in user's profile, or `data: null` before onboarding. Express route remains until C40CS-43. |
+| `POST /api/career-profile` | `POST /profile` | Migrated in C40CS-32. Validates, normalizes skills, upserts on `user_id` (201). Express route remains until C40CS-43.    |

@@ -430,3 +430,9 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/jobs/deno.json"
 entrypoint = "./functions/jobs/index.ts"
+
+[functions.profile]
+enabled = true
+verify_jwt = true
+import_map = "./functions/profile/deno.json"
+entrypoint = "./functions/profile/index.ts"
