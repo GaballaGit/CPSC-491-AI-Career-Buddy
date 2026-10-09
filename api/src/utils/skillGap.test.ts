@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { compareSkills, mergeSkillSources } from "./skillGap.js";
+import { compareSkills, mergeSkillSources } from "./skills.js";
 import { normalizeSkills } from "./skills.js";
 
 describe("compareSkills", () => {

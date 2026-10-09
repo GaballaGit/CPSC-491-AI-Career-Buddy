@@ -2,7 +2,7 @@ import type {
   ExperienceLevel,
   LearningPreference,
   OnboardingFormData,
-} from "../app/onboarding/types";
+} from "./careerProfileForm";
 import { authHeaders } from "./auth";
 
 export interface CareerProfile {

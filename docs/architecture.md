@@ -1,119 +1,87 @@
 # CareerLM Architecture
 
-High-level view of how CareerLM is put together and how the four subsystems fit
-around one shared Career Profile.
+CareerLM has a Next.js frontend and two backend runtimes. See
+[contracts.md](contracts.md) for data shapes, [database.md](database.md) for
+Supabase setup, and [deployment.md](deployment.md) for deployment.
 
-For endpoint naming, response and error shapes, auth headers, and database
-naming, see [CONVENTIONS.md](../CONVENTIONS.md). This document covers structure,
-not conventions.
+## Runtime boundaries
 
-## 1. System structure
+| Layer | Location | Responsibility |
+| --- | --- | --- |
+| Frontend | `site/career-buddy-site/` | Next.js App Router pages, local form state, UI components, and backend clients in `lib/` |
+| Express API | `api/` | Career Profile and portfolio endpoints, auth endpoints, and legacy jobs/resume endpoints |
+| Edge Functions | `supabase/functions/` | Jobs, resume extraction and skills, AI feedback, and resume health endpoint |
+| Persistence | `api/src/database/`, Edge `_shared/*/repository.ts` | Supabase queries; Express jobs are an in-memory seeded fallback |
+| Infrastructure | `infra/` | Terraform provider configuration for Cloudflare and Supabase; no application resources currently defined |
 
-Four parts, each in its own folder in this repo.
+Frontend deployment uses OpenNext on Cloudflare Workers. Edge Functions deploy
+separately to Supabase. The repository does not deploy an Express server in
+these workflows; profile and portfolio features still require one.
 
-| Layer          | Folder                   | What it does                                                 |
-| -------------- | ------------------------ | ------------------------------------------------------------ |
-| Frontend       | `site/career-buddy-site` | Next.js app. Pages, forms, and rendering. No business logic. |
-| API            | `api`                    | Express service. Routes, controllers, services, and errors.  |
-| Database       | `api/src/database`       | Client and migrations. Not connected yet, see KAN-18.        |
-| Infrastructure | `infra`                  | Terraform definitions.                                       |
+## Request flow
 
-In development the frontend runs on port 3000 and the API on port 8000. The
-frontend forwards `/api/*` to the API through a rewrite in `next.config.ts`, so
-browser code can call relative paths.
+- `api/src/index.ts` seeds the in-memory job repository and starts `app.ts`.
+  `app.ts` registers `/`, `/health`, the `/api` router, and error middleware.
+- Express routes authenticate before controllers validate input and call
+  repositories or services. Project controllers preserve their own response
+  shapes; not every route uses the common success envelope.
+- Edge `index.ts` files start Deno servers. Each `handler.ts` composes injected
+  authentication/store dependencies so tests can call handlers with plain
+  requests. `_shared/http.ts` owns CORS and response envelopes.
+- Resume upload validates a file, extracts text and normalized skills, and
+  replaces the user's saved resume skills. AI feedback calls an
+  OpenAI-compatible provider with runtime-only credentials.
 
-## 2. The four subsystems
+Keep HTTP handling, domain operations, persistence, and runtime integrations
+separate. Small pure skill operations are shared between Node and Deno via
+`api/src/utils/skills.ts`; runtime-specific clients and errors are not shared.
 
-Each member owns one vertical slice and builds the frontend, backend, and data
-work for it.
+## Identity and persistence
 
-| Owner        | Subsystem                    | Responsibility                                                                       |
-| ------------ | ---------------------------- | ------------------------------------------------------------------------------------ |
-| Jim Alvarez  | Career Profile & Roadmap     | Onboarding questionnaire, the user's profile, skill-gap analysis, roadmap generation |
-| William Wang | Resume Intelligence          | Resume upload, text extraction, skill extraction, AI resume feedback                 |
-| Mark Gaballa | Job Intelligence & Matching  | Job data, job skill extraction, match scoring, ranking, filters                      |
-| Daniel Lee   | Portfolio & Career Readiness | Project portfolio, progress tracking, readiness score, dashboard                     |
+The browser signs in with Supabase Auth. Express verifies bearer tokens and
+uses a lazy service-role database client, so repositories must explicitly
+scope user-owned queries by `user_id`. Edge authentication creates a client
+scoped to the user's JWT so RLS applies. Do not merge these client lifetimes or
+security boundaries merely because they query the same tables.
 
-## 3. The shared Career Profile
+Career Profiles and resume skills each have one row per user. Profile saves
+replace the submitted profile fields; resume uploads replace saved skills.
+Projects are user-owned, with only completed projects counted as skill
+evidence. Skills are stored as display-name strings and normalized for
+comparison; job required skills have their own lowercase persistence format.
 
-The Career Profile is the one record every subsystem reads from or writes to. It
-holds the user's target role, experience level, skills, and progress.
+SQL migrations live in `api/src/database/migrations/` and are applied manually.
+`runMigrations()` currently lists migration names; it does not execute SQL.
+Do not infer that starting the API applies migrations.
 
-```mermaid
-flowchart TD
-    User([User])
-    Onboarding[Onboarding questionnaire<br/>Jim]
-    Resume[Resume Intelligence<br/>William]
-    Profile[(Shared Career Profile)]
-    Roadmap[Skill gaps and roadmap<br/>Jim]
-    Jobs[Job matching<br/>Mark]
-    Portfolio[Portfolio and readiness<br/>Daniel]
+## Frontend backend selection
 
-    User --> Onboarding
-    User --> Resume
-    Onboarding -->|goals, experience, stated skills| Profile
-    Resume -->|skills found in the resume| Profile
-    Profile --> Roadmap
-    Profile --> Jobs
-    Profile --> Portfolio
-    Portfolio -->|completed projects| Profile
-```
+- Career Profile calls use `/api/career-profile`, forwarded by `next.config.ts`
+  to `API_URL` (default `http://localhost:8000`).
+- Portfolio calls use `NEXT_PUBLIC_API_URL` plus `/api/projects`.
+- Jobs call the Supabase jobs function directly; resume calls use
+  `supabase.functions.invoke()`.
 
-Jim owns the Career Profile schema, since Career Profile is his subsystem.
-Anyone who needs a new field on it asks him rather than adding it directly.
+Shared form types, options, and validation live in
+`site/career-buddy-site/lib/careerProfileForm.ts`, not in an onboarding route.
+The resume client in `lib/resume.ts` owns its response types and both strict
+saved-skills access and best-effort profile import. Pages retain their UI state
+and orchestration.
 
-Two subsystems write skills into the profile: onboarding collects what the user
-says they know, and Resume Intelligence adds what the resume shows. Roadmap, job
-matching, and portfolio all read from it.
+These clients currently have different error and authentication behavior.
+They are not interchangeable generic transports. Frontend CD provides
+`NEXT_PUBLIC_API_URL`, but not `API_URL`; proxy configuration for deployed
+Career Profile calls remains an integration concern.
 
-That creates two problems the team has to agree on.
+## Verification and known gaps
 
-- **One skill format.** If one side normalizes `JS` to `JavaScript` and another
-  does not, matching scores stop meaning anything.
-- **What happens when the two sources disagree.** A user may not list a skill in
-  onboarding that their resume clearly shows, or the other way around. The
-  simplest rule is to keep both sets and record where each skill came from,
-  instead of one overwriting the other.
+API tests use Vitest and node:test. Edge tests use Deno with fake auth/stores
+and real extraction fixtures. Tests do not prove deployed RLS or service
+availability; live Supabase tests are opt-in. Frontend CI runs pure form tests with node:test, lint, and build.
+See the root README for commands and the historical
+[e2e validation record](e2e-validation-sprint2.md) for pending live checks.
 
-## 4. How subsystems talk to each other
-
-Subsystems talk through agreed API endpoints and shared types in
-`api/src/types`. They do not import each other's controllers or services
-directly.
-
-The point is that each owner can change how their own subsystem works internally
-without breaking anyone else, as long as the shape of the data going in and out
-stays the same.
-
-## 5. Life of a request
-
-Using a resume upload as the example. Every subsystem follows the same path.
-
-```mermaid
-flowchart LR
-    A[Page<br/>app/resume] --> B[Route<br/>routes.ts]
-    B --> C[Controller<br/>controllers/resumes.ts]
-    C --> D[Service<br/>services/resume.ts]
-    D --> E[(Database)]
-    C -.->|typed error| F[Error middleware<br/>middleware/errors.ts]
-    F -.->|JSON error response| A
-```
-
-- **Route** registers the path and any upload middleware.
-- **Controller** handles HTTP: validates the request, calls a service, shapes
-  the response.
-- **Service** holds the logic and knows nothing about HTTP, so it can be tested
-  on its own.
-- **Errors** are thrown as typed error classes from `errors/index.ts`. One
-  middleware turns them into the shared JSON error shape, so no controller
-  writes its own error response.
-
-## 6. Open items
-
-- **Database is not chosen yet.** `database/client.ts` is still a stub and
-  KAN-18 is blocked until the team picks Supabase or plain Postgres. The
-  existing migrations are raw SQL, so either option works.
-- **No test framework in `api` yet.** The team still needs to pick Jest or
-  Vitest before KAN-17 and the other test tickets can start.
-- **Auth is not wired in.** Until it is, endpoints are not tied to a logged-in
-  user.
+Known contract mismatch: project controllers return `{ data }` on successful
+create/read/update, but the frontend project client requires `success: true`.
+This is an existing integration issue, not a reason to change response formats
+as part of a structural refactor.

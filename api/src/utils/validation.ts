@@ -27,7 +27,7 @@ const LEARNING_PREFERENCES: readonly LearningPreference[] = [
   "structured_courses",
 ];
 
-// Keep in sync with site/career-buddy-site/app/onboarding/validation.ts.
+// Keep in sync with site/career-buddy-site/lib/careerProfileForm.ts.
 const TARGET_CAREER_MAX_LENGTH = 100;
 const SKILL_MAX_LENGTH = 50;
 const MAX_SKILLS = 30;

@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ResumeUploadData, Skill } from "./types";
 import {
+  type ResumeUploadData,
+  type Skill,
   getSavedResumeSkills,
   isSignedIn,
   ResumeRequestError,

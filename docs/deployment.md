@@ -8,19 +8,13 @@ also be run by hand from the **Actions** tab with **Run workflow**.
 
 1. Installs the Supabase CLI (pinned to 2.117.0).
 2. Fails right away if a deploy secret is missing.
-<<<<<<< HEAD
-3. Runs `supabase functions deploy --use-api`, which bundles every function under `supabase/functions/` (folders starting with `_` are not deployed on their own) without Docker.
-4. Runs a post-deployment health check against the deployed Resume Edge Function.
-5. Lists the deployed functions.
-6. Writes the build version and health-check result to the run summary: `build-<run number>-<short commit>`, e.g. `build-12-a81fc20`.
-=======
 3. Runs `supabase functions deploy --use-api`, which bundles every function
    under `supabase/functions/` (folders starting with `_` are not deployed on
    their own) without Docker.
-4. Lists the deployed functions.
-5. Writes the build version to the run summary:
+4. Runs a post-deployment health check against the deployed Resume Edge Function.
+5. Lists the deployed functions.
+6. Writes the build version and health-check result to the run summary:
    `build-<run number>-<short commit>`, e.g. `build-12-a81fc20`.
->>>>>>> 991967a (run deno fmt)
 
 A failed deploy or failed post-deployment health check fails the workflow run.
 
@@ -83,21 +77,11 @@ token and replace the secret.
 
 ## Secrets rules
 
-<<<<<<< HEAD
 - Deploy credentials live only in GitHub repository secrets. Moving them to a protected `production` environment needs a repo admin and is follow-up work.
 - Runtime secrets for functions (e.g. an AI API key) are set in Supabase, not GitHub: `supabase secrets set NAME=value --project-ref <ref>`.
 - AI feedback (C40CS-14) reads `LLM_API_KEY`, `LLM_BASE_URL`, and `LLM_MODEL` from Supabase secrets. Any OpenAI-compatible provider works; we use NRP Managed LLMs (`https://ellm.nrp-nautilus.io/v1`, model `gpt-oss`). Without them, `POST /resume/feedback` returns `503 AI_NOT_CONFIGURED`.
 - `SUPABASE_URL` and `SUPABASE_ANON_KEY` are provided to functions by Supabase automatically.
 - Nothing secret goes in the repo, `.env.example` files, workflow logs, or health endpoint responses.
-=======
-- Deploy credentials live only in GitHub repository secrets. Moving them to a
-  protected `production` environment needs a repo admin and is follow-up work.
-- Runtime secrets for functions (e.g. an AI API key) are set in Supabase, not
-  GitHub: `supabase secrets set NAME=value --project-ref <ref>`.
-- `SUPABASE_URL` and `SUPABASE_ANON_KEY` are provided to functions by Supabase
-  automatically.
-- Nothing secret goes in the repo, `.env.example` files, or workflow logs.
->>>>>>> 991967a (run deno fmt)
 
 ## Database migrations
 
@@ -110,9 +94,10 @@ that adds one merges, run the new `.sql` file once in the Supabase dashboard
 
 C40CS-26 also requires post-deployment verification of the Cloudflare-hosted frontend.
 
-The repository currently does not contain a Cloudflare frontend deployment workflow or configured deployed frontend URL.
-
-The frontend smoke check will be added when that deployment is available. It should verify that the deployed frontend responds successfully and fail the deployment workflow if the site is unavailable.
+The repository deploys the frontend through `.github/workflows/frontend-cd.yml`,
+but that workflow does not yet perform a post-deployment smoke check. A future
+check should verify the deployed frontend URL and fail the deployment workflow
+if the site is unavailable.
 
 The Supabase Resume health verification can operate independently of that future frontend check.
 

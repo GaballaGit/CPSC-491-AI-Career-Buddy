@@ -8,7 +8,8 @@ infrastructure code shared by all subsystem owners.
 ```
 api/                    Backend API (Express + TypeScript)
 site/career-buddy-site/ Frontend (Next.js + TypeScript)
-infra/                  Infrastructure as code (Terraform, AWS)
+supabase/               Deno Edge Functions (jobs and resume)
+infra/                  Terraform configuration (Cloudflare and Supabase)
 ```
 
 ## Prerequisites
@@ -36,13 +37,16 @@ npm install
 npm run dev
 ```
 
-Runs the Next.js dev server on `http://localhost:3000`. Run `npm run lint` and
-`npm run build` before committing.
+Runs the Next.js dev server on `http://localhost:3000`. Run `npm test`,
+`npm run lint`, and `npm run build` before committing. The focused form tests
+use Node's built-in TypeScript stripping (Node 22.6+; CI uses Node 24), with no
+additional test dependencies.
 
 ## Infrastructure (`infra/`)
 
-Terraform config targeting AWS (`us-west-2` by default). Requires Terraform >=
-1.5.0 and AWS credentials configured locally.
+Terraform provider configuration for Cloudflare and Supabase. Requires
+Terraform >= 1.6.0. No application resources are currently managed here; see
+`infra/README.md`.
 
 ```bash
 cd infra
@@ -52,8 +56,14 @@ terraform plan
 
 ## Environment variables
 
-None required yet. As subsystems add config (API keys, DB URLs, etc.), document
-them here and add a `.env.example` in the relevant folder.
+Use `api/.env.example` and `site/career-buddy-site/.env.example` as configuration
+guides. See `docs/database.md` for server-only Supabase credentials and
+`docs/deployment.md` for frontend variables and Edge Function secrets. Never
+expose service-role or AI credentials to the browser.
+
+Career Profile calls use the `API_URL` rewrite; project calls use
+`NEXT_PUBLIC_API_URL`. These are currently separate configuration paths, not
+aliases. See `docs/architecture.md` for runtime boundaries and known gaps.
 
 ## CI
 
@@ -63,7 +73,7 @@ GitHub Actions runs checks on pull requests to `main` (see
 | Workflow    | Runs when you change      | Checks                                                             |
 | ----------- | ------------------------- | ------------------------------------------------------------------ |
 | API CI      | `api/`, `supabase/`       | Prettier, ESLint, `tsc` build, all tests (`npm test`), Deno checks |
-| Frontend CI | `site/career-buddy-site/` | ESLint, build                                                      |
+| Frontend CI | `site/career-buddy-site/` | Form tests, ESLint, build                                                      |
 | Infra CI    | `infra/`                  | `terraform fmt`, `validate`                                        |
 
 Run the API checks locally from `api/` before pushing:
@@ -80,6 +90,6 @@ Run the API checks locally from `api/` before pushing:
   `.env` and is excluded from CI; run it with `npm run test:integration`.
 
 **Edge Functions:** when `supabase/functions/<name>/index.ts` exists, CI also
-runs `deno fmt --check`, `deno lint`, and `deno check` on it. API modules that
+runs `deno fmt --check`, `deno lint`, `deno check`, and the Deno tests. API modules that
 functions import (currently `api/src/utils/skills.ts`) are always type-checked
 under Deno; add new shared modules to the `edge-functions` job.

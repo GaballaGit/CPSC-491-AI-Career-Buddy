@@ -1,4 +1,4 @@
-import type { Skill } from "./types";
+import type { Skill } from "../../lib/resume";
 
 type Props =
   | { state: "loading" }

@@ -1,4 +1,46 @@
-import type { OnboardingFormData } from "./types";
+/** Form state and validation shared by onboarding and profile editing. */
+export type ExperienceLevel = "beginner" | "intermediate" | "advanced";
+
+export type LearningPreference =
+  | "videos"
+  | "reading"
+  | "hands_on_projects"
+  | "mentorship"
+  | "structured_courses";
+
+/** Local form state, including unanswered fields; not the API payload. */
+export interface OnboardingFormData {
+  targetCareer: string;
+  experienceLevel: ExperienceLevel | "";
+  skills: string[];
+  learningPreferences: LearningPreference[];
+  weeklyAvailabilityHours: number | "";
+}
+
+export const initialOnboardingFormData: OnboardingFormData = {
+  targetCareer: "",
+  experienceLevel: "",
+  skills: [],
+  learningPreferences: [],
+  weeklyAvailabilityHours: "",
+};
+
+export const EXPERIENCE_LEVELS: { value: ExperienceLevel; label: string }[] = [
+  { value: "beginner", label: "Beginner" },
+  { value: "intermediate", label: "Intermediate" },
+  { value: "advanced", label: "Advanced" },
+];
+
+export const LEARNING_PREFERENCES: {
+  value: LearningPreference;
+  label: string;
+}[] = [
+  { value: "videos", label: "Video courses" },
+  { value: "reading", label: "Articles & docs" },
+  { value: "hands_on_projects", label: "Hands-on projects" },
+  { value: "mentorship", label: "Mentorship" },
+  { value: "structured_courses", label: "Structured courses" },
+];
 
 // Keep in sync with api/src/utils/validation.ts so the form never lets through
 // something the server will reject.
