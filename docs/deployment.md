@@ -105,9 +105,32 @@ tables by hand in the dashboard SQL Editor; add a migration instead.
 2. Write SQL that is safe to run more than once where possible
    (`CREATE TABLE IF NOT EXISTS`, `DROP POLICY IF EXISTS` before
    `CREATE POLICY`), and enable row level security on every new table.
-3. Open a PR. After it merges, the workflow applies only migrations the
+3. Open a PR. `.github/workflows/migrations-check.yml` applies every migration
+   to a fresh database, and the PR check fails if any migration has an error.
+4. After it merges, the deploy workflow applies only migrations the shared
    database has not seen yet. Supabase records applied versions in
    `supabase_migrations.schema_migrations`.
+
+### Testing locally
+
+With Docker running, from the repo root:
+
+```bash
+npx supabase db start
+npx supabase db reset --local --no-seed
+```
+
+This is the same check the PR runs.
+
+### If a migration fails
+
+- **On the PR:** the check is red and nothing reaches the shared database. Fix
+  the file and push again.
+- **On merge:** the deploy workflow stops at **Apply migrations**, so Edge
+  Functions are not deployed. Fix it in a new PR.
+- **To undo a migration that already ran:** add a new migration that reverses
+  it (for example, drop the column it added). There are no automatic down
+  migrations.
 
 ### Baseline
 
@@ -117,9 +140,9 @@ hand before automation. They only use `IF NOT EXISTS` / `DROP ... IF EXISTS`
 statements, so the first automated run re-applies them without changing
 existing tables or data and records them as applied.
 
-The copies in `api/src/database/migrations/` stay for the Express API and its
-tests until Express is retired. `supabase/migrations/` is the source of truth
-for the shared database.
+The copies in `api/src/database/migrations/` are deprecated. They stay only for
+the Express API and its tests until Express is retired.
+`supabase/migrations/` is the source of truth for the shared database.
 
 ### Never edit an applied migration
 
