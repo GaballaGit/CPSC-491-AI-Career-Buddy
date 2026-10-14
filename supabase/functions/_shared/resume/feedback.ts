@@ -23,6 +23,8 @@ const FIELDS = [
 ] as const;
 
 const MAX_RESUME_CHARS = 12_000;
+const MAX_ITEMS = 5;
+const MAX_ITEM_CHARS = 500;
 
 // Config - Null when the AI provider is not set up
 export function llmConfigFromEnv(): LlmConfig | null {
@@ -84,11 +86,16 @@ export function parseFeedback(raw: string): ResumeFeedback {
   for (const field of FIELDS) {
     const value = (parsed as Record<string, unknown>)[field];
     if (!Array.isArray(value)) throw invalid;
+    // Long Output - Cap item count and length
     result[field] = value
       .filter((item): item is string => typeof item === "string")
-      .map((item) => item.trim())
-      .filter(Boolean);
+      .map((item) => item.trim().slice(0, MAX_ITEM_CHARS))
+      .filter(Boolean)
+      .slice(0, MAX_ITEMS);
   }
+
+  // Empty Feedback - Nothing to show the user
+  if (FIELDS.every((field) => result[field].length === 0)) throw invalid;
   return result;
 }
 
