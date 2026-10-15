@@ -91,3 +91,33 @@ deno lint supabase/functions
 | `GET /api/jobs/:id` | `GET /jobs/:id`      | Migrated in C40CS-20 with optional match metadata for signed-in users.                                           |
 | `GET /api/career-profile`  | `GET /profile`  | Migrated in C40CS-32. Signed-in user's profile, or `data: null` before onboarding. Express route remains until C40CS-43. |
 | `POST /api/career-profile` | `POST /profile` | Migrated in C40CS-32. Validates, normalizes skills, upserts on `user_id` (201). Express route remains until C40CS-43.    |
+| `POST /api/projects` | `POST /projects` | Migrated in C40CS-31. Creates a project for the signed-in user through the Projects Edge Function. |
+| `GET /api/projects` | `GET /projects` | Migrated in C40CS-31. Dashboard and Portfolio list projects through the Edge Function. |
+| `GET /api/projects/:id` | `GET /projects/:id` | Migrated in C40CS-31 with ownership enforcement. |
+| `PATCH /api/projects/:id` | `PATCH /projects/:id` | Migrated in C40CS-31 with validation, skill normalization, and ownership enforcement. |
+| `DELETE /api/projects/:id` | `DELETE /projects/:id` | Migrated in C40CS-31 with ownership enforcement. |
+
+## Portfolio migration
+
+C40CS-31 migrates Portfolio project CRUD from the local Express API to the
+`projects` Supabase Edge Function.
+
+Supported routes:
+
+- `POST /projects`
+- `GET /projects`
+- `GET /projects/:id`
+- `PATCH /projects/:id`
+- `DELETE /projects/:id`
+
+The function requires an authenticated Supabase user. Project reads, updates,
+and deletes are scoped by both `user_id` and project ID so another user's
+project is treated as not found.
+
+The frontend now calls the Edge Function through
+`supabase.functions.invoke()` and no longer requires the Express API for
+Dashboard or Portfolio project create/list flows.
+
+The existing Express project routes remain temporarily as legacy endpoints.
+
+
