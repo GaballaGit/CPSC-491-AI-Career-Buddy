@@ -26,3 +26,13 @@ jobs:
       # Fails the check if any migration has an error
       - name: Apply all migrations
         run: supabase db reset --local --no-seed
+
+        
+      # Replay - Every migration must run a second time without errors (C40CS-52)
+      - name: Re-run all migrations
+        run: |
+          for file in supabase/migrations/*.sql; do
+            echo "Re-running $file"
+            psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+              -v ON_ERROR_STOP=1 -q -f "$file"
+          done
