@@ -67,9 +67,9 @@ function validateAll(
 const primaryButton =
   "rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background disabled:opacity-40";
 const secondaryButton =
-  "rounded-full border border-black/[.08] px-5 py-2.5 text-sm font-medium text-black dark:border-white/[.145] dark:text-zinc-50";
+  "rounded-full border border-line px-5 py-2.5 text-sm font-medium text-foreground";
 const inputClass =
-  "rounded-lg border border-black/[.08] bg-transparent px-4 py-2.5 text-black outline-none focus:border-foreground dark:border-white/[.145] dark:text-zinc-50";
+  "rounded-lg border border-line bg-transparent px-4 py-2.5 text-foreground outline-none focus:border-accent";
 
 function Message({
   text,
@@ -79,8 +79,8 @@ function Message({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-zinc-50 px-6 py-16 text-center dark:bg-black">
-      <p className="text-zinc-600 dark:text-zinc-400">{text}</p>
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-background px-6 py-16 text-center">
+      <p className="text-muted">{text}</p>
       {children}
     </div>
   );
@@ -250,9 +250,9 @@ export default function EditProfilePage() {
   );
 
   return (
-    <div className="flex flex-1 flex-col items-center bg-zinc-50 px-6 py-16 dark:bg-black">
-      <div className="w-full max-w-xl rounded-2xl border border-black/[.08] bg-white p-8 dark:border-white/[.145] dark:bg-zinc-950">
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
+    <div className="flex flex-1 flex-col items-center bg-background px-6 py-16">
+      <div className="w-full max-w-xl rounded-2xl border border-line bg-card p-8">
+        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-foreground">
           Edit Career Profile
         </h1>
 
@@ -260,7 +260,7 @@ export default function EditProfilePage() {
           <div className="flex flex-col gap-2">
             <label
               htmlFor="targetCareer"
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              className="text-sm font-medium text-foreground"
             >
               Target career
             </label>
@@ -277,7 +277,7 @@ export default function EditProfilePage() {
             {fieldErrors.targetCareer && (
               <p
                 role="alert"
-                className="text-sm text-red-600 dark:text-red-400"
+                className="text-sm text-danger"
               >
                 {fieldErrors.targetCareer}
               </p>
@@ -285,7 +285,7 @@ export default function EditProfilePage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="text-sm font-medium text-foreground">
               Experience level
             </span>
             <div className="flex flex-col gap-2">
@@ -295,7 +295,7 @@ export default function EditProfilePage() {
                   className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-2.5 ${
                     formData.experienceLevel === value
                       ? "border-foreground"
-                      : "border-black/[.08] dark:border-white/[.145]"
+                      : "border-line"
                   }`}
                 >
                   <input
@@ -306,14 +306,14 @@ export default function EditProfilePage() {
                     onChange={() =>
                       update((prev) => ({ ...prev, experienceLevel: value }))}
                   />
-                  <span className="text-black dark:text-zinc-50">{label}</span>
+                  <span className="text-foreground">{label}</span>
                 </label>
               ))}
             </div>
             {fieldErrors.experienceLevel && (
               <p
                 role="alert"
-                className="text-sm text-red-600 dark:text-red-400"
+                className="text-sm text-danger"
               >
                 {fieldErrors.experienceLevel}
               </p>
@@ -323,7 +323,7 @@ export default function EditProfilePage() {
           <div className="flex flex-col gap-3">
             <label
               htmlFor="skillInput"
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              className="text-sm font-medium text-foreground"
             >
               Skills
             </label>
@@ -350,7 +350,7 @@ export default function EditProfilePage() {
               <button
                 type="button"
                 onClick={handleAddSkillInput}
-                className="rounded-lg bg-foreground px-4 py-2.5 text-sm font-medium text-background"
+                className="rounded-full bg-foreground px-4 py-2.5 text-sm font-medium text-background"
               >
                 Add
               </button>
@@ -358,7 +358,7 @@ export default function EditProfilePage() {
             {skillError && (
               <p
                 role="alert"
-                className="text-sm text-red-600 dark:text-red-400"
+                className="text-sm text-danger"
               >
                 {skillError}
               </p>
@@ -366,7 +366,7 @@ export default function EditProfilePage() {
             {fieldErrors.skills && (
               <p
                 role="alert"
-                className="text-sm text-red-600 dark:text-red-400"
+                className="text-sm text-danger"
               >
                 {fieldErrors.skills}
               </p>
@@ -375,14 +375,14 @@ export default function EditProfilePage() {
               {formData.skills.map((skill) => (
                 <span
                   key={skill}
-                  className="flex items-center gap-1.5 rounded-full bg-black/[.06] px-3 py-1 text-sm text-black dark:bg-white/[.08] dark:text-zinc-50"
+                  className="flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-sm text-accent"
                 >
                   {skill}
                   <button
                     type="button"
                     onClick={() => removeSkill(skill)}
                     aria-label={`Remove ${skill}`}
-                    className="text-zinc-500 hover:text-black dark:hover:text-white"
+                    className="text-muted hover:text-foreground"
                   >
                     ×
                   </button>
@@ -391,9 +391,9 @@ export default function EditProfilePage() {
             </div>
 
             {importableResumeSkills.length > 0 && (
-              <div className="mt-2 rounded-lg border border-black/[.08] p-4 dark:border-white/[.145]">
+              <div className="mt-2 rounded-lg border border-line p-4">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  <span className="text-sm font-medium text-foreground">
                     From your resume
                   </span>
                   <button
@@ -410,7 +410,7 @@ export default function EditProfilePage() {
                       key={skill}
                       type="button"
                       onClick={() => addSkill(skill)}
-                      className="rounded-full border border-black/[.08] px-3 py-1 text-sm text-black dark:border-white/[.145] dark:text-zinc-50"
+                      className="rounded-full border border-line px-3 py-1 text-sm text-foreground"
                     >
                       + {skill}
                     </button>
@@ -421,7 +421,7 @@ export default function EditProfilePage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="text-sm font-medium text-foreground">
               Learning preferences
             </span>
             {LEARNING_PREFERENCES.map(({ value, label }) => (
@@ -430,7 +430,7 @@ export default function EditProfilePage() {
                 className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-2.5 ${
                   formData.learningPreferences.includes(value)
                     ? "border-foreground"
-                    : "border-black/[.08] dark:border-white/[.145]"
+                    : "border-line"
                 }`}
               >
                 <input
@@ -438,13 +438,13 @@ export default function EditProfilePage() {
                   checked={formData.learningPreferences.includes(value)}
                   onChange={() => toggleLearningPreference(value)}
                 />
-                <span className="text-black dark:text-zinc-50">{label}</span>
+                <span className="text-foreground">{label}</span>
               </label>
             ))}
             {fieldErrors.learningPreferences && (
               <p
                 role="alert"
-                className="text-sm text-red-600 dark:text-red-400"
+                className="text-sm text-danger"
               >
                 {fieldErrors.learningPreferences}
               </p>
@@ -454,7 +454,7 @@ export default function EditProfilePage() {
           <div className="flex flex-col gap-2">
             <label
               htmlFor="availability"
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              className="text-sm font-medium text-foreground"
             >
               Weekly availability (hours)
             </label>
@@ -478,7 +478,7 @@ export default function EditProfilePage() {
             {fieldErrors.weeklyAvailabilityHours && (
               <p
                 role="alert"
-                className="text-sm text-red-600 dark:text-red-400"
+                className="text-sm text-danger"
               >
                 {fieldErrors.weeklyAvailabilityHours}
               </p>
@@ -489,7 +489,7 @@ export default function EditProfilePage() {
         {submitError && (
           <div
             role="alert"
-            className="mt-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-200"
+            className="mt-6 rounded-lg border border-danger-line bg-danger-soft px-4 py-3 text-sm text-danger"
           >
             {submitError.status === 401
               ? (

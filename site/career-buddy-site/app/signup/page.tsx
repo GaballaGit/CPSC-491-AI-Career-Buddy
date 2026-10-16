@@ -45,39 +45,39 @@ export default function SignUpPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-6 dark:bg-black">
+    <main className="flex min-h-screen items-center justify-center bg-background px-6">
       <form
         onSubmit={submit}
-        className="w-full max-w-sm rounded-2xl border border-black/[.08] bg-white p-8 dark:border-white/[.145] dark:bg-zinc-950"
+        className="w-full max-w-sm rounded-2xl border border-line bg-card p-8"
       >
-        <h1 className="text-2xl font-semibold text-black dark:text-zinc-50">
+        <h1 className="text-2xl font-semibold text-foreground">
           Create account
         </h1>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-sm text-muted">
           Supabase Auth stores your account and session securely.
         </p>
 
-        <label className="mt-6 block text-sm font-medium text-black dark:text-zinc-50">
+        <label className="mt-6 block text-sm font-medium text-foreground">
           Name
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            className="mt-2 w-full rounded-lg border border-black/[.12] px-3 py-2 dark:border-white/[.2] dark:bg-zinc-900"
+            className="mt-2 w-full rounded-lg border border-line bg-card px-3 py-2 text-foreground outline-none focus:border-accent"
           />
         </label>
 
-        <label className="mt-4 block text-sm font-medium text-black dark:text-zinc-50">
+        <label className="mt-4 block text-sm font-medium text-foreground">
           Email
           <input
             type="email"
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="mt-2 w-full rounded-lg border border-black/[.12] px-3 py-2 dark:border-white/[.2] dark:bg-zinc-900"
+            className="mt-2 w-full rounded-lg border border-line bg-card px-3 py-2 text-foreground outline-none focus:border-accent"
           />
         </label>
 
-        <label className="mt-4 block text-sm font-medium text-black dark:text-zinc-50">
+        <label className="mt-4 block text-sm font-medium text-foreground">
           Password
           <input
             type="password"
@@ -85,12 +85,12 @@ export default function SignUpPage() {
             minLength={8}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="mt-2 w-full rounded-lg border border-black/[.12] px-3 py-2 dark:border-white/[.2] dark:bg-zinc-900"
+            className="mt-2 w-full rounded-lg border border-line bg-card px-3 py-2 text-foreground outline-none focus:border-accent"
           />
         </label>
 
-        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-        {message && <p className="mt-4 text-sm text-green-700">{message}</p>}
+        {error && <p className="mt-4 text-sm text-danger">{error}</p>}
+        {message && <p className="mt-4 text-sm text-success">{message}</p>}
 
         <button
           type="submit"
@@ -100,7 +100,7 @@ export default function SignUpPage() {
           {isSubmitting ? "Creating..." : "Sign up"}
         </button>
 
-        <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-4 text-sm text-muted">
           Have an account?{" "}
           <Link className="underline" href="/signin">Sign in</Link>
         </p>

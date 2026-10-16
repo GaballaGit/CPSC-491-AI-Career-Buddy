@@ -40,14 +40,14 @@ export default function FeedbackPanel({ text }: { text: string }) {
   return (
     <section className="mt-12" aria-live="polite">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
+        <h2 className="text-lg font-semibold text-foreground">
           AI feedback
         </h2>
         <button
           type="button"
           onClick={requestFeedback}
           disabled={loading}
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:bg-zinc-300 disabled:text-zinc-500 dark:disabled:bg-zinc-800"
+          className="rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-85 disabled:bg-line disabled:text-muted"
         >
           {loading
             ? "Reviewing..."
@@ -58,7 +58,7 @@ export default function FeedbackPanel({ text }: { text: string }) {
       </div>
 
       {!feedback && !loading && !error && (
-        <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-3 text-sm text-muted">
           Get strengths, weaknesses, missing skills, and suggestions for your
           target role.
         </p>
@@ -69,19 +69,19 @@ export default function FeedbackPanel({ text }: { text: string }) {
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-28 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800"
+              className="h-28 animate-pulse rounded-xl bg-line"
             />
           ))}
         </div>
       )}
 
       {error && !loading && (
-        <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-red-300 bg-red-50 px-5 py-4 dark:border-red-900 dark:bg-red-950/50">
-          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+        <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-danger-line bg-danger-soft px-5 py-4">
+          <p className="text-sm text-danger">{error}</p>
           <button
             type="button"
             onClick={requestFeedback}
-            className="shrink-0 rounded-md border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-white dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950"
+            className="shrink-0 rounded-full border border-danger-line px-3 py-1.5 text-xs font-semibold text-danger hover:bg-card"
           >
             Try again
           </button>
@@ -91,7 +91,7 @@ export default function FeedbackPanel({ text }: { text: string }) {
       {feedback && !loading && (
         <>
           {feedback.targetRole && (
-            <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="mt-3 text-xs text-muted">
               Reviewed for: {feedback.targetRole}
             </p>
           )}
@@ -101,18 +101,18 @@ export default function FeedbackPanel({ text }: { text: string }) {
               return (
                 <div
                   key={key}
-                  className="rounded-xl border border-zinc-200 bg-white px-5 py-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                  className="rounded-xl border border-line bg-card px-5 py-4"
                 >
-                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">
+                  <h3 className="text-sm font-semibold text-foreground">
                     {title}
                   </h3>
                   {items.length > 0
                     ? (
-                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-foreground">
                         {items.map((item) => <li key={item}>{item}</li>)}
                       </ul>
                     )
-                    : <p className="mt-2 text-sm text-zinc-500">None noted.</p>}
+                    : <p className="mt-2 text-sm text-muted">None noted.</p>}
                 </div>
               );
             })}

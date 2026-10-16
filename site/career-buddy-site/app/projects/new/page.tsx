@@ -63,14 +63,14 @@ export default function AddProjectPage() {
   }
 
   return (
-    <div className="flex min-h-screen justify-center bg-zinc-50 px-6 py-16 dark:bg-black">
+    <div className="flex min-h-screen justify-center bg-background px-6 py-16">
       <main className="w-full max-w-2xl">
-        <div className="rounded-2xl border border-black/[.08] bg-white p-8 dark:border-white/[.145] dark:bg-zinc-950">
-          <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
+        <div className="rounded-2xl border border-line bg-card p-8">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Add Project
           </h1>
 
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-2 text-sm text-muted">
             Add a portfolio project and the skills you demonstrated.
           </p>
 
@@ -81,7 +81,7 @@ export default function AddProjectPage() {
             <div className="flex flex-col gap-2">
               <label
                 htmlFor="title"
-                className="text-sm font-medium text-black dark:text-zinc-50"
+                className="text-sm font-medium text-foreground"
               >
                 Project title
               </label>
@@ -94,7 +94,7 @@ export default function AddProjectPage() {
                 minLength={3}
                 maxLength={100}
                 required
-                className="rounded-lg border border-black/[.12] bg-white px-3 py-2 text-black outline-none focus:border-black dark:border-white/[.2] dark:bg-zinc-900 dark:text-zinc-50"
+                className="rounded-lg border border-line bg-card px-3 py-2 text-foreground outline-none focus:border-accent"
                 placeholder="AI Career Coach"
               />
             </div>
@@ -102,7 +102,7 @@ export default function AddProjectPage() {
             <div className="flex flex-col gap-2">
               <label
                 htmlFor="description"
-                className="text-sm font-medium text-black dark:text-zinc-50"
+                className="text-sm font-medium text-foreground"
               >
                 Description
               </label>
@@ -113,7 +113,7 @@ export default function AddProjectPage() {
                 onChange={(event) => setDescription(event.target.value)}
                 required
                 rows={5}
-                className="rounded-lg border border-black/[.12] bg-white px-3 py-2 text-black outline-none focus:border-black dark:border-white/[.2] dark:bg-zinc-900 dark:text-zinc-50"
+                className="rounded-lg border border-line bg-card px-3 py-2 text-foreground outline-none focus:border-accent"
                 placeholder="Describe what you built and what the project does."
               />
             </div>
@@ -121,7 +121,7 @@ export default function AddProjectPage() {
             <div className="flex flex-col gap-2">
               <label
                 htmlFor="skills"
-                className="text-sm font-medium text-black dark:text-zinc-50"
+                className="text-sm font-medium text-foreground"
               >
                 Skills demonstrated
               </label>
@@ -132,11 +132,11 @@ export default function AddProjectPage() {
                 value={skills}
                 onChange={(event) => setSkills(event.target.value)}
                 required
-                className="rounded-lg border border-black/[.12] bg-white px-3 py-2 text-black outline-none focus:border-black dark:border-white/[.2] dark:bg-zinc-900 dark:text-zinc-50"
+                className="rounded-lg border border-line bg-card px-3 py-2 text-foreground outline-none focus:border-accent"
                 placeholder="TypeScript, React, PostgreSQL"
               />
 
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-muted">
                 Separate skills with commas.
               </p>
             </div>
@@ -144,7 +144,7 @@ export default function AddProjectPage() {
             <div className="flex flex-col gap-2">
               <label
                 htmlFor="urls"
-                className="text-sm font-medium text-black dark:text-zinc-50"
+                className="text-sm font-medium text-foreground"
               >
                 Project URLs
               </label>
@@ -154,11 +154,11 @@ export default function AddProjectPage() {
                 type="text"
                 value={urls}
                 onChange={(event) => setUrls(event.target.value)}
-                className="rounded-lg border border-black/[.12] bg-white px-3 py-2 text-black outline-none focus:border-black dark:border-white/[.2] dark:bg-zinc-900 dark:text-zinc-50"
+                className="rounded-lg border border-line bg-card px-3 py-2 text-foreground outline-none focus:border-accent"
                 placeholder="https://github.com/..., https://example.com"
               />
 
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-muted">
                 Optional. Separate multiple URLs with commas.
               </p>
             </div>
@@ -166,7 +166,7 @@ export default function AddProjectPage() {
             <div className="flex flex-col gap-2">
               <label
                 htmlFor="status"
-                className="text-sm font-medium text-black dark:text-zinc-50"
+                className="text-sm font-medium text-foreground"
               >
                 Status
               </label>
@@ -178,7 +178,7 @@ export default function AddProjectPage() {
                   setStatus(
                     event.target.value as ProjectStatus,
                   )}
-                className="rounded-lg border border-black/[.12] bg-white px-3 py-2 text-black outline-none focus:border-black dark:border-white/[.2] dark:bg-zinc-900 dark:text-zinc-50"
+                className="rounded-lg border border-line bg-card px-3 py-2 text-foreground outline-none focus:border-accent"
               >
                 <option value="in_progress">
                   In progress
@@ -190,13 +190,13 @@ export default function AddProjectPage() {
             </div>
 
             {errorMessage && (
-              <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+              <p className="rounded-lg bg-danger-soft px-4 py-3 text-sm text-danger">
                 {errorMessage}
               </p>
             )}
 
             {successMessage && (
-              <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-950/40 dark:text-green-300">
+              <p className="rounded-lg bg-success-soft px-4 py-3 text-sm text-success">
                 {successMessage}
               </p>
             )}
