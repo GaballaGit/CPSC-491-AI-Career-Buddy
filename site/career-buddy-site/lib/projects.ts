@@ -1,4 +1,6 @@
-import { authHeaders } from "./auth";
+import { FunctionsHttpError } from "@supabase/supabase-js";
+
+import { getSupabaseClient } from "./supabase";
 
 export type ProjectStatus = "in_progress" | "completed";
 
@@ -22,27 +24,52 @@ export interface Project {
   updated_at: string;
 }
 
-interface ApiSuccessResponse<T> {
-  success: true;
-  data: T;
-  meta: {
-    timestamp: string;
-  };
-}
-
-interface ApiErrorResponse {
-  success: false;
-  error: {
-    code: string;
+interface ApiErrorPayload {
+  code: string;
+  message: string;
+  details?: Array<{
+    field: string;
     message: string;
-    details?: Array<{
-      field: string;
-      message: string;
-    }>;
-  };
+  }>;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+export class ProjectRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string,
+  ) {
+    super(message);
+    this.name = "ProjectRequestError";
+  }
+}
+
+async function toProjectRequestError(
+  error: unknown,
+): Promise<ProjectRequestError> {
+  if (error instanceof FunctionsHttpError) {
+    try {
+      const body = (await error.context.json()) as {
+        error?: ApiErrorPayload;
+      };
+
+      const apiError = body.error;
+
+      if (apiError) {
+        return new ProjectRequestError(
+          apiError.details?.[0]?.message ?? apiError.message,
+          apiError.code,
+        );
+      }
+    } catch {
+      // Unreadable response body; use generic fallback below.
+    }
+  }
+
+  return new ProjectRequestError(
+    "Something went wrong. Please try again.",
+    "UNKNOWN",
+  );
+}
 
 /**
  * Create a new project for the authenticated user.
@@ -50,51 +77,34 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 export async function createProject(
   input: CreateProjectInput,
 ): Promise<Project> {
-  const response = await fetch(`${API_URL}/api/projects`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(await authHeaders()),
+  const { data, error } = await getSupabaseClient().functions.invoke(
+    "projects",
+    {
+      body: input,
     },
-    body: JSON.stringify(input),
-  });
+  );
 
-  const payload = (await response.json()) as
-    | ApiSuccessResponse<Project>
-    | ApiErrorResponse;
-
-  if (!response.ok || !payload.success) {
-    const message = "error" in payload
-      ? payload.error.message
-      : "Unable to create project.";
-
-    throw new Error(message);
+  if (error) {
+    throw await toProjectRequestError(error);
   }
 
-  return payload.data;
+  return (data as { data: Project }).data;
 }
 
 /**
  * Retrieve all projects belonging to the authenticated user.
  */
 export async function getProjects(): Promise<Project[]> {
-  const response = await fetch(`${API_URL}/api/projects`, {
-    method: "GET",
-    headers: await authHeaders(),
-    cache: "no-store",
-  });
+  const { data, error } = await getSupabaseClient().functions.invoke(
+    "projects",
+    {
+      method: "GET",
+    },
+  );
 
-  const payload = (await response.json()) as
-    | ApiSuccessResponse<Project[]>
-    | ApiErrorResponse;
-
-  if (!response.ok || !payload.success) {
-    const message = "error" in payload
-      ? payload.error.message
-      : "Unable to retrieve projects.";
-
-    throw new Error(message);
+  if (error) {
+    throw await toProjectRequestError(error);
   }
 
-  return payload.data;
+  return (data as { data: Project[] }).data;
 }

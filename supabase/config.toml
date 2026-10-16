@@ -436,3 +436,9 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/profile/deno.json"
 entrypoint = "./functions/profile/index.ts"
+
+[functions.projects]
+enabled = true
+verify_jwt = true
+import_map = "./functions/projects/deno.json"
+entrypoint = "./functions/projects/index.ts"
