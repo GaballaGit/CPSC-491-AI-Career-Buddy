@@ -80,6 +80,9 @@ Run the API checks locally from `api/` before pushing:
 `npm run format:check && npm run lint && npm run build && npm test`.
 `npm run format` fixes formatting.
 
+See `docs/testing-strategy.md` for test levels, conventions, the current
+baseline, and who owns which testing stories.
+
 **Adding a backend test**
 
 - Vitest: name it `*.test.ts` and it runs automatically.
