@@ -42,8 +42,8 @@ function Message({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-zinc-50 px-6 py-16 text-center dark:bg-black">
-      <p className="text-zinc-600 dark:text-zinc-400">{text}</p>
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-background px-6 py-16 text-center">
+      <p className="text-muted">{text}</p>
       {children}
     </div>
   );
@@ -126,41 +126,41 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center bg-zinc-50 px-6 py-16 dark:bg-black">
-      <div className="w-full max-w-xl rounded-2xl border border-black/[.08] bg-white p-8 dark:border-white/[.145] dark:bg-zinc-950">
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
+    <div className="flex flex-1 flex-col items-center bg-background px-6 py-16">
+      <div className="w-full max-w-xl rounded-2xl border border-line bg-card p-8">
+        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-foreground">
           Your Career Profile
         </h1>
         <dl className="flex flex-col gap-4 text-sm">
           <div>
-            <dt className="font-medium text-zinc-500">Target Career</dt>
-            <dd className="text-black dark:text-zinc-50">
+            <dt className="font-medium text-muted">Target Career</dt>
+            <dd className="text-foreground">
               {profile.target_career}
             </dd>
           </div>
           <div>
-            <dt className="font-medium text-zinc-500">Experience Level</dt>
-            <dd className="text-black dark:text-zinc-50">
+            <dt className="font-medium text-muted">Experience Level</dt>
+            <dd className="text-foreground">
               {experienceLabel(profile.experience_level)}
             </dd>
           </div>
           <div>
-            <dt className="font-medium text-zinc-500">Skills</dt>
-            <dd className="text-black dark:text-zinc-50">
+            <dt className="font-medium text-muted">Skills</dt>
+            <dd className="text-foreground">
               {profile.skills.join(", ")}
             </dd>
           </div>
           <div>
-            <dt className="font-medium text-zinc-500">Learning Preferences</dt>
-            <dd className="text-black dark:text-zinc-50">
+            <dt className="font-medium text-muted">Learning Preferences</dt>
+            <dd className="text-foreground">
               {profile.learning_preferences
                 .map(learningPreferenceLabel)
                 .join(", ")}
             </dd>
           </div>
           <div>
-            <dt className="font-medium text-zinc-500">Weekly Availability</dt>
-            <dd className="text-black dark:text-zinc-50">
+            <dt className="font-medium text-muted">Weekly Availability</dt>
+            <dd className="text-foreground">
               {profile.weekly_availability_hours} hours/week
             </dd>
           </div>
@@ -171,7 +171,7 @@ export default function ProfilePage() {
           </Link>
           <Link
             href="/roadmap"
-            className="rounded-full border border-black/[.08] px-5 py-2.5 text-sm font-medium text-black dark:border-white/[.145] dark:text-zinc-50"
+            className="rounded-full border border-line px-5 py-2.5 text-sm font-medium text-foreground"
           >
             View Roadmap
           </Link>

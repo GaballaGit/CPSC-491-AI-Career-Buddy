@@ -165,48 +165,48 @@ export default function ResumePage() {
     : [];
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950">
+    <div className="min-h-screen bg-background">
       {/* Top Bar - Product name and section */}
-      <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <header className="border-b border-line bg-card">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-4">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-xs font-bold text-card">
             C
           </span>
-          <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+          <span className="text-sm font-semibold text-foreground">
             CareerLM
           </span>
-          <span className="h-4 w-px bg-zinc-300 dark:bg-zinc-700" />
-          <span className="text-sm text-zinc-500 dark:text-zinc-400">
+          <span className="h-4 w-px bg-line" />
+          <span className="text-sm text-muted">
             Resume Intelligence
           </span>
         </div>
       </header>
 
       <main className="mx-auto max-w-3xl px-6 py-16">
-        <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent">
           Step 1 of 3
         </p>
-        <h1 className="mt-3 text-4xl font-bold tracking-tight text-zinc-900 dark:text-white">
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
           Upload your resume
         </h1>
-        <p className="mt-4 max-w-xl text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+        <p className="mt-4 max-w-xl text-lg leading-8 text-muted">
           We read the text out of your{" "}
-          <code className="rounded border border-zinc-200 bg-zinc-100 px-1.5 py-0.5 font-mono text-[0.85em] text-zinc-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+          <code className="rounded border border-line bg-background px-1.5 py-0.5 font-mono text-[0.85em] text-foreground">
             .pdf
           </code>{" "}
           or{" "}
-          <code className="rounded border border-zinc-200 bg-zinc-100 px-1.5 py-0.5 font-mono text-[0.85em] text-zinc-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+          <code className="rounded border border-line bg-background px-1.5 py-0.5 font-mono text-[0.85em] text-foreground">
             .docx
           </code>{" "}
           so the rest of CareerLM can work with it.
         </p>
 
         {signedIn === false && (
-          <div className="mt-10 rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+          <div className="mt-10 rounded-2xl border border-line bg-card p-6 text-sm text-foreground">
             <p>Sign in to upload your resume and see your skills.</p>
             <Link
               href="/signin"
-              className="mt-4 inline-flex h-10 items-center rounded-lg bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-700"
+              className="mt-4 inline-flex h-10 items-center rounded-full bg-foreground px-5 text-sm font-medium text-background hover:opacity-85"
             >
               Sign in
             </Link>
@@ -216,7 +216,7 @@ export default function ResumePage() {
         {signedIn && (
           <>
             {/* Upload Card - Drop zone plus action */}
-            <div className="mt-10 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="mt-10 rounded-2xl border border-line bg-card p-6">
               <div
                 onClick={() => inputRef.current?.click()}
                 onDragOver={(e) => {
@@ -231,8 +231,8 @@ export default function ResumePage() {
                 }}
                 className={`cursor-pointer rounded-xl border-2 border-dashed px-8 py-14 text-center transition-colors ${
                   dragging
-                    ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40"
-                    : "border-zinc-300 hover:border-indigo-400 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:border-indigo-500 dark:hover:bg-zinc-800/50"
+                    ? "border-accent bg-accent-soft"
+                    : "border-line hover:border-accent hover:bg-background"
                 }`}
               >
                 <input
@@ -246,8 +246,8 @@ export default function ResumePage() {
                 <div
                   className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${
                     file
-                      ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400"
-                      : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                      ? "bg-accent-soft text-accent"
+                      : "bg-background text-muted"
                   }`}
                 >
                   <svg
@@ -281,20 +281,20 @@ export default function ResumePage() {
                 {file
                   ? (
                     <>
-                      <p className="mt-4 font-mono text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                      <p className="mt-4 font-mono text-sm font-medium text-foreground">
                         {file.name}
                       </p>
-                      <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-1.5 text-sm text-muted">
                         {formatBytes(file.size)} · click to choose another
                       </p>
                     </>
                   )
                   : (
                     <>
-                      <p className="mt-4 text-base font-medium text-zinc-900 dark:text-zinc-100">
+                      <p className="mt-4 text-base font-medium text-foreground">
                         Drop a file here, or click to browse
                       </p>
-                      <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                      <p className="mt-1.5 text-sm text-muted">
                         PDF or Word, up to 5 MB
                       </p>
                     </>
@@ -305,7 +305,7 @@ export default function ResumePage() {
                 type="button"
                 onClick={handleUpload}
                 disabled={!file || uploading}
-                className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-lg bg-indigo-600 px-8 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:bg-zinc-200 disabled:text-zinc-400 sm:w-auto dark:disabled:bg-zinc-800 dark:disabled:text-zinc-600"
+                className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-full bg-foreground px-8 text-sm font-medium text-background transition-colors hover:opacity-85 disabled:bg-line disabled:text-muted sm:w-auto"
               >
                 {uploading && (
                   <svg
@@ -336,24 +336,24 @@ export default function ResumePage() {
             </div>
 
             {error && (
-              <div className="mt-6 flex gap-3 rounded-xl border border-red-300 bg-red-50 px-5 py-4 dark:border-red-900 dark:bg-red-950/50">
+              <div className="mt-6 flex gap-3 rounded-xl border border-danger-line bg-danger-soft px-5 py-4">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth={1.75}
                   strokeLinecap="round"
-                  className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400"
+                  className="mt-0.5 h-5 w-5 shrink-0 text-danger"
                   aria-hidden="true"
                 >
                   <circle cx="12" cy="12" r="9" />
                   <path d="M12 8v4M12 16h.01" />
                 </svg>
                 <div>
-                  <p className="text-sm font-semibold text-red-900 dark:text-red-200">
+                  <p className="text-sm font-semibold text-danger">
                     We could not read that file
                   </p>
-                  <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+                  <p className="mt-1 text-sm text-danger">
                     {error}
                   </p>
                 </div>
@@ -380,7 +380,7 @@ export default function ResumePage() {
 
             {result && (
               <section className="mt-12">
-                <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                <h2 className="text-lg font-semibold text-foreground">
                   Extraction result
                 </h2>
 
@@ -389,32 +389,32 @@ export default function ResumePage() {
                   {stats.map((stat) => (
                     <div
                       key={stat.label}
-                      className="rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                      className="rounded-xl border border-line bg-card px-4 py-3"
                     >
-                      <p className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                      <p className="text-xs font-medium uppercase tracking-wider text-muted">
                         {stat.label}
                       </p>
-                      <p className="mt-1 text-xl font-bold tabular-nums text-zinc-900 dark:text-white">
+                      <p className="mt-1 text-xl font-bold tabular-nums text-foreground">
                         {stat.value}
                       </p>
                     </div>
                   ))}
                 </div>
 
-                <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                  <div className="flex items-center justify-between gap-4 border-b border-zinc-200 bg-zinc-50 px-5 py-3 dark:border-zinc-800 dark:bg-zinc-800/50">
-                    <span className="truncate font-mono text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <div className="mt-4 overflow-hidden rounded-xl border border-line bg-card">
+                  <div className="flex items-center justify-between gap-4 border-b border-line bg-background px-5 py-3">
+                    <span className="truncate font-mono text-sm font-medium text-foreground">
                       {result.filename}
                     </span>
                     <button
                       type="button"
                       onClick={handleCopy}
-                      className="shrink-0 rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium text-zinc-700 transition-colors hover:bg-white dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                      className="shrink-0 rounded-full border border-line px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-card"
                     >
                       {copied ? "Copied" : "Copy"}
                     </button>
                   </div>
-                  <pre className="max-h-[28rem] overflow-auto whitespace-pre-wrap px-5 py-4 text-sm leading-6 text-zinc-700 dark:text-zinc-300">
+                  <pre className="max-h-[28rem] overflow-auto whitespace-pre-wrap px-5 py-4 text-sm leading-6 text-foreground">
                     {result.text}
                   </pre>
                 </div>

@@ -24,7 +24,26 @@ Tailwind theme mappings expose these tokens through classes such as:
 - `text-accent`
 - `border-line`
 
-Do not introduce unrelated page-specific color systems when an existing token satisfies the need.
+Status tokens (C40CS-64) cover feedback states:
+
+- `accent-soft` - skill and tag pills (`bg-accent-soft text-accent`), selected states
+- `success`, `success-soft`, `success-line` - saved/matched messages and matched skills
+- `warning-soft`, `warning-line` - prompts and notices
+- `danger`, `danger-soft`, `danger-line` - errors, error boxes and missing skills
+
+Do not introduce unrelated page-specific color systems when an existing token satisfies the need. Raw Tailwind palette colors (`zinc`, `black`, `white`, `red`, `indigo`, ...) are not used; map them to a token instead.
+
+## Look and feel
+
+Every page should look like the landing page (`app/page.tsx`):
+
+- Font: Geist (`--font-geist-sans`, applied to `body` in `globals.css`). Do not set other font families.
+- Light only. Do not add `dark:` variants; the tokens have no dark-mode values, so mixing them with `dark:` classes produces black panels inside the light shell.
+- Off-white `background` page, white `card` panels with a `border-line` border and large rounded corners (`rounded-2xl`), no drop shadows.
+- Buttons are rounded pills (`rounded-full`).
+- Eyebrow labels: `text-xs font-bold uppercase tracking-[0.14em] text-accent`.
+- App page titles use the `PageHeader` size (`text-3xl font-semibold tracking-tight`); the oversized hero heading is for the landing page only.
+- Inputs: `border-line`, `bg-card`, `focus:border-accent`.
 
 ## Page layout
 
@@ -70,7 +89,7 @@ Form controls should:
 - use `border-line` for borders
 - use `bg-card` or `bg-background`
 - include visible labels
-- maintain usable focus states
+- maintain usable focus states (`focus:border-accent`)
 - remain usable at mobile widths
 
 ## Loading, error, and empty states

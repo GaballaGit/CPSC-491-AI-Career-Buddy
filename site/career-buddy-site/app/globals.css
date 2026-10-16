@@ -7,6 +7,15 @@
   --accent: #2f6b4f;
   --line: #dce4dc;
   --card: #fff;
+  --accent-soft: #edf3ee;
+  --success: #23563d;
+  --success-soft: #e4f4ea;
+  --success-line: #b9dfc8;
+  --warning-soft: #fff8e6;
+  --warning-line: #f0dfad;
+  --danger: #a63d32;
+  --danger-soft: #fdecea;
+  --danger-line: #f3c7c1;
 }
 
 @theme inline {
@@ -16,6 +25,17 @@
   --color-accent: var(--accent);
   --color-line: var(--line);
   --color-card: var(--card);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-line: var(--success-line);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-line: var(--warning-line);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-line: var(--danger-line);
+  --font-sans: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 * {
@@ -25,7 +45,7 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 a {
   text-decoration: none;
@@ -120,7 +140,7 @@ a {
   gap: 6px;
 }
 .skill {
-  background: #edf3ee;
+  background: var(--accent-soft);
   border-radius: 999px;
   color: var(--accent);
   font-size: 0.78rem;
@@ -128,10 +148,10 @@ a {
 }
 .match-score {
   align-self: flex-start;
-  background: #e4f4ea;
-  border: 1px solid #b9dfc8;
+  background: var(--success-soft);
+  border: 1px solid var(--success-line);
   border-radius: 999px;
-  color: #23563d;
+  color: var(--success);
   font-size: 0.82rem;
   font-weight: 700;
   margin: 0 0 16px;
@@ -152,8 +172,8 @@ a {
   padding: 4px 0;
 }
 .prompt {
-  background: #fff8e6;
-  border: 1px solid #f0dfad;
+  background: var(--warning-soft);
+  border: 1px solid var(--warning-line);
   border-radius: 14px;
   margin: 0 0 24px;
   padding: 14px 16px;
@@ -164,7 +184,7 @@ a {
   text-decoration: underline;
 }
 .error {
-  color: #a63d32;
+  color: var(--danger);
 }
 .detail {
   max-width: 760px;
@@ -211,10 +231,10 @@ a {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 .success-skills .skill {
-  background: #e4f4ea;
-  color: #23563d;
+  background: var(--success-soft);
+  color: var(--success);
 }
 .missing-skills .skill {
-  background: #fdecea;
-  color: #9f2f24;
+  background: var(--danger-soft);
+  color: var(--danger);
 }

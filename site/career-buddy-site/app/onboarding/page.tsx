@@ -112,8 +112,8 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center bg-zinc-50 px-6 py-16 dark:bg-black">
-      <div className="w-full max-w-xl rounded-2xl border border-black/[.08] bg-white p-8 dark:border-white/[.145] dark:bg-zinc-950">
+    <div className="flex flex-1 flex-col items-center bg-background px-6 py-16">
+      <div className="w-full max-w-xl rounded-2xl border border-line bg-card p-8">
         <div className="mb-8 flex items-center gap-2">
           {STEPS.map((label, i) => (
             <div key={label} className="flex flex-1 items-center gap-2">
@@ -121,7 +121,7 @@ export default function OnboardingPage() {
                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium ${
                   i <= step
                     ? "bg-foreground text-background"
-                    : "bg-black/[.06] text-zinc-500 dark:bg-white/[.08]"
+                    : "bg-accent-soft text-muted"
                 }`}
               >
                 {i + 1}
@@ -131,7 +131,7 @@ export default function OnboardingPage() {
                   className={`h-px flex-1 ${
                     i < step
                       ? "bg-foreground"
-                      : "bg-black/[.08] dark:bg-white/[.145]"
+                      : "bg-line"
                   }`}
                 />
               )}
@@ -139,7 +139,7 @@ export default function OnboardingPage() {
           ))}
         </div>
 
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
+        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-foreground">
           {STEPS[step]}
         </h1>
 
@@ -147,7 +147,7 @@ export default function OnboardingPage() {
           <div className="flex flex-col gap-2">
             <label
               htmlFor="targetCareer"
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              className="text-sm font-medium text-foreground"
             >
               What career are you targeting?
             </label>
@@ -163,14 +163,14 @@ export default function OnboardingPage() {
                   targetCareer: e.target.value,
                 }))}
               placeholder="e.g. Frontend Engineer"
-              className="rounded-lg border border-black/[.08] bg-transparent px-4 py-2.5 text-black outline-none focus:border-foreground dark:border-white/[.145] dark:text-zinc-50"
+              className="rounded-lg border border-line bg-transparent px-4 py-2.5 text-foreground outline-none focus:border-accent"
             />
           </div>
         )}
 
         {step === 1 && (
           <div className="flex flex-col gap-3">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="text-sm font-medium text-foreground">
               What&apos;s your current experience level?
             </span>
             <div className="flex flex-col gap-2">
@@ -180,7 +180,7 @@ export default function OnboardingPage() {
                   className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-2.5 ${
                     formData.experienceLevel === value
                       ? "border-foreground"
-                      : "border-black/[.08] dark:border-white/[.145]"
+                      : "border-line"
                   }`}
                 >
                   <input
@@ -194,7 +194,7 @@ export default function OnboardingPage() {
                         experienceLevel: value,
                       }))}
                   />
-                  <span className="text-black dark:text-zinc-50">{label}</span>
+                  <span className="text-foreground">{label}</span>
                 </label>
               ))}
             </div>
@@ -205,7 +205,7 @@ export default function OnboardingPage() {
           <div className="flex flex-col gap-3">
             <label
               htmlFor="skillInput"
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              className="text-sm font-medium text-foreground"
             >
               What skills do you already have?
             </label>
@@ -227,12 +227,12 @@ export default function OnboardingPage() {
                   }
                 }}
                 placeholder="e.g. TypeScript"
-                className="flex-1 rounded-lg border border-black/[.08] bg-transparent px-4 py-2.5 text-black outline-none focus:border-foreground dark:border-white/[.145] dark:text-zinc-50"
+                className="flex-1 rounded-lg border border-line bg-transparent px-4 py-2.5 text-foreground outline-none focus:border-accent"
               />
               <button
                 type="button"
                 onClick={addSkill}
-                className="rounded-lg bg-foreground px-4 py-2.5 text-sm font-medium text-background"
+                className="rounded-full bg-foreground px-4 py-2.5 text-sm font-medium text-background"
               >
                 Add
               </button>
@@ -240,7 +240,7 @@ export default function OnboardingPage() {
             {skillError && (
               <p
                 role="alert"
-                className="text-sm text-red-600 dark:text-red-400"
+                className="text-sm text-danger"
               >
                 {skillError}
               </p>
@@ -249,14 +249,14 @@ export default function OnboardingPage() {
               {formData.skills.map((skill) => (
                 <span
                   key={skill}
-                  className="flex items-center gap-1.5 rounded-full bg-black/[.06] px-3 py-1 text-sm text-black dark:bg-white/[.08] dark:text-zinc-50"
+                  className="flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-sm text-accent"
                 >
                   {skill}
                   <button
                     type="button"
                     onClick={() => removeSkill(skill)}
                     aria-label={`Remove ${skill}`}
-                    className="text-zinc-500 hover:text-black dark:hover:text-white"
+                    className="text-muted hover:text-foreground"
                   >
                     ×
                   </button>
@@ -268,7 +268,7 @@ export default function OnboardingPage() {
 
         {step === 3 && (
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="text-sm font-medium text-foreground">
               How do you prefer to learn? (select all that apply)
             </span>
             {LEARNING_PREFERENCES.map(({ value, label }) => (
@@ -277,7 +277,7 @@ export default function OnboardingPage() {
                 className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-2.5 ${
                   formData.learningPreferences.includes(value)
                     ? "border-foreground"
-                    : "border-black/[.08] dark:border-white/[.145]"
+                    : "border-line"
                 }`}
               >
                 <input
@@ -285,7 +285,7 @@ export default function OnboardingPage() {
                   checked={formData.learningPreferences.includes(value)}
                   onChange={() => toggleLearningPreference(value)}
                 />
-                <span className="text-black dark:text-zinc-50">{label}</span>
+                <span className="text-foreground">{label}</span>
               </label>
             ))}
           </div>
@@ -295,7 +295,7 @@ export default function OnboardingPage() {
           <div className="flex flex-col gap-2">
             <label
               htmlFor="availability"
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              className="text-sm font-medium text-foreground"
             >
               How many hours per week can you dedicate?
             </label>
@@ -315,7 +315,7 @@ export default function OnboardingPage() {
                     : Number(e.target.value),
                 }))}
               placeholder="e.g. 10"
-              className="rounded-lg border border-black/[.08] bg-transparent px-4 py-2.5 text-black outline-none focus:border-foreground dark:border-white/[.145] dark:text-zinc-50"
+              className="rounded-lg border border-line bg-transparent px-4 py-2.5 text-foreground outline-none focus:border-accent"
             />
           </div>
         )}
@@ -323,7 +323,7 @@ export default function OnboardingPage() {
         {stepError && (
           <p
             role="alert"
-            className="mt-3 text-sm text-red-600 dark:text-red-400"
+            className="mt-3 text-sm text-danger"
           >
             {stepError}
           </p>
@@ -332,7 +332,7 @@ export default function OnboardingPage() {
         {submitError && (
           <div
             role="alert"
-            className="mt-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-200"
+            className="mt-6 rounded-lg border border-danger-line bg-danger-soft px-4 py-3 text-sm text-danger"
           >
             {submitError.status === 401
               ? (
@@ -369,7 +369,7 @@ export default function OnboardingPage() {
             type="button"
             onClick={goBack}
             disabled={step === 0}
-            className="rounded-full border border-black/[.08] px-5 py-2.5 text-sm font-medium text-black disabled:opacity-40 dark:border-white/[.145] dark:text-zinc-50"
+            className="rounded-full border border-line px-5 py-2.5 text-sm font-medium text-foreground disabled:opacity-40"
           >
             Back
           </button>

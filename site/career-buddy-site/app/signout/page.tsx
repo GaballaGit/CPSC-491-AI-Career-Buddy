@@ -15,7 +15,7 @@ export default function SignOutPage() {
   }, [router]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-6 text-sm text-zinc-600 dark:bg-black dark:text-zinc-400">
+    <main className="flex min-h-screen items-center justify-center bg-background px-6 text-sm text-muted">
       Signing out...
     </main>
   );

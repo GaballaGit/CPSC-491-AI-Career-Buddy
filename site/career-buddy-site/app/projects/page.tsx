@@ -37,26 +37,26 @@ export default function ProjectsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-zinc-50 px-6 py-16 dark:bg-black">
+    <div className="min-h-screen bg-background px-6 py-16">
       <main className="mx-auto w-full max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-semibold tracking-tight text-black dark:text-zinc-50">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Portfolio Projects
           </h1>
 
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-2 text-sm text-muted">
             Review the projects saved to your portfolio.
           </p>
         </div>
 
         {isLoading && (
-          <div className="rounded-2xl border border-black/[.08] bg-white p-8 text-sm text-zinc-600 dark:border-white/[.145] dark:bg-zinc-950 dark:text-zinc-400">
+          <div className="rounded-2xl border border-line bg-card p-8 text-sm text-muted">
             Loading projects...
           </div>
         )}
 
         {!isLoading && errorMessage && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+          <div className="rounded-2xl border border-danger-line bg-danger-soft p-6 text-sm text-danger">
             {errorMessage}
           </div>
         )}
@@ -64,12 +64,12 @@ export default function ProjectsPage() {
         {!isLoading &&
           !errorMessage &&
           projects.length === 0 && (
-          <div className="rounded-2xl border border-black/[.08] bg-white p-8 text-center dark:border-white/[.145] dark:bg-zinc-950">
-            <h2 className="text-lg font-medium text-black dark:text-zinc-50">
+          <div className="rounded-2xl border border-line bg-card p-8 text-center">
+            <h2 className="text-lg font-medium text-foreground">
               No projects yet
             </h2>
 
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-sm text-muted">
               Projects you add to your portfolio will appear here.
             </p>
           </div>
@@ -82,24 +82,24 @@ export default function ProjectsPage() {
             {projects.map((project) => (
               <article
                 key={project.id}
-                className="rounded-2xl border border-black/[.08] bg-white p-6 dark:border-white/[.145] dark:bg-zinc-950"
+                className="rounded-2xl border border-line bg-card p-6"
               >
                 <div className="flex items-start justify-between gap-4">
-                  <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
+                  <h2 className="text-xl font-semibold text-foreground">
                     {project.title}
                   </h2>
 
-                  <span className="shrink-0 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                  <span className="shrink-0 rounded-full bg-background px-3 py-1 text-xs font-medium text-muted">
                     {formatStatus(project.status)}
                   </span>
                 </div>
 
-                <p className="mt-4 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                <p className="mt-4 text-sm leading-6 text-muted">
                   {project.description}
                 </p>
 
                 <div className="mt-5">
-                  <h3 className="text-sm font-medium text-black dark:text-zinc-50">
+                  <h3 className="text-sm font-medium text-foreground">
                     Skills
                   </h3>
 
@@ -107,7 +107,7 @@ export default function ProjectsPage() {
                     {project.skills_demonstrated.map((skill) => (
                       <span
                         key={skill}
-                        className="rounded-full bg-zinc-100 px-3 py-1 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                        className="rounded-full bg-accent-soft px-3 py-1 text-xs text-accent"
                       >
                         {skill}
                       </span>
@@ -117,7 +117,7 @@ export default function ProjectsPage() {
 
                 {project.project_urls.length > 0 && (
                   <div className="mt-5">
-                    <h3 className="text-sm font-medium text-black dark:text-zinc-50">
+                    <h3 className="text-sm font-medium text-foreground">
                       Links
                     </h3>
 
@@ -128,7 +128,7 @@ export default function ProjectsPage() {
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="break-all text-sm text-blue-600 underline dark:text-blue-400"
+                            className="break-all text-sm text-accent underline"
                           >
                             {url}
                           </a>
@@ -138,7 +138,7 @@ export default function ProjectsPage() {
                   </div>
                 )}
 
-                <p className="mt-6 text-xs text-zinc-500">
+                <p className="mt-6 text-xs text-muted">
                   Updated {formatDate(project.updated_at)}
                 </p>
               </article>
