@@ -1,0 +1,28 @@
+name: Migrations Check
+
+# Applies every migration to a fresh local database on PRs (C40CS-35)
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "supabase/migrations/**"
+      - ".github/workflows/migrations-check.yml"
+
+jobs:
+  apply:
+    name: Apply migrations to a fresh database
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.117.0
+
+      - name: Start local database
+        run: supabase db start
+
+      # Fails the check if any migration has an error
+      - name: Apply all migrations
+        run: supabase db reset --local --no-seed

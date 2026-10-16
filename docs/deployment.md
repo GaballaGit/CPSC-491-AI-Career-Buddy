@@ -1,22 +1,28 @@
-# Deploying Edge Functions
+# Deploying to Supabase
 
-Every merge to `main` that touches `supabase/**` deploys all Edge Functions to
-Supabase through `.github/workflows/deploy-functions.yml` (C40CS-15). It can
-also be run by hand from the **Actions** tab with **Run workflow**.
+Every merge to `main` that touches `supabase/**` applies new database
+migrations and then deploys all Edge Functions to Supabase through
+`.github/workflows/deploy-functions.yml` (C40CS-15, C40CS-35). It can also be
+run by hand from the **Actions** tab with **Run workflow**.
 
 ## What the workflow does
 
 1. Installs the Supabase CLI (pinned to 2.117.0).
 2. Fails right away if a deploy secret is missing.
-3. Runs `supabase functions deploy --use-api`, which bundles every function
+3. Links the project and applies database migrations (see
+   [Database migrations](#database-migrations)): a `--dry-run` preview first,
+   then `supabase db push`, then `supabase migration list` for the log.
+4. Runs `supabase functions deploy --use-api`, which bundles every function
    under `supabase/functions/` (folders starting with `_` are not deployed on
    their own) without Docker.
-4. Runs a post-deployment health check against the deployed Resume Edge Function.
-5. Lists the deployed functions.
-6. Writes the build version and health-check result to the run summary:
+5. Runs a post-deployment health check against the deployed Resume Edge Function.
+6. Lists the deployed functions.
+7. Writes the build version and health-check result to the run summary:
    `build-<run number>-<short commit>`, e.g. `build-12-a81fc20`.
 
-A failed deploy or failed post-deployment health check fails the workflow run.
+Migrations run before functions are deployed, so a function never goes live
+before the tables it uses. A failed migration, deploy, or post-deployment
+health check fails the workflow run, and nothing after the failed step runs.
 
 ## Post-deployment health verification
 
@@ -65,12 +71,13 @@ If all attempts fail, the workflow exits with an error and the GitHub Actions de
 ## One-time setup
 
 GitHub → **Settings → Secrets and variables → Actions → New repository secret**.
-Add two secrets:
+Add three secrets:
 
-| Secret                  | Value                                                                                                                         |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `SUPABASE_ACCESS_TOKEN` | A Supabase access token with **Edge Functions: Read-write** and **Project Settings: Read**, scoped to the `career lm` project |
-| `SUPABASE_PROJECT_REF`  | The project ref, the subdomain in the project URL (`<ref>.supabase.co`)                                                       |
+| Secret                  | Value                                                                                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `SUPABASE_ACCESS_TOKEN` | A Supabase access token with **Edge Functions: Read-write**, **Project Settings: Read**, and **API Keys: Read** (needed by `supabase link`), scoped to the `career lm` project |
+| `SUPABASE_PROJECT_REF`  | The project ref, the subdomain in the project URL (`<ref>.supabase.co`)                                                                                                        |
+| `SUPABASE_DB_PASSWORD`  | The database password, from Supabase → **Database → Settings**. It can only be reset, not viewed, so reset it if nobody has it                                                 |
 
 Access tokens expire. When the deploy fails with an auth error, generate a new
 token and replace the secret.
@@ -85,10 +92,63 @@ token and replace the secret.
 
 ## Database migrations
 
-Not automated yet. Migrations live in `api/src/database/migrations/`. After a PR
-that adds one merges, run the new `.sql` file once in the Supabase dashboard
-(**SQL Editor**). Moving them to `supabase/migrations/` so the workflow can run
-`supabase db push` is follow-up work.
+Automated since C40CS-35. Migrations live in `supabase/migrations/` and are
+applied by the deploy workflow with `supabase db push`. Do not create or change
+tables by hand in the dashboard SQL Editor; add a migration instead.
+
+### Adding a migration
+
+1. Create a file named `<timestamp>_<description>.sql`, for example
+   `20261020120000_add_resume_feedback.sql`. Running
+   `npx supabase migration new add_resume_feedback` creates one with the right
+   timestamp.
+2. Write SQL that is safe to run more than once where possible
+   (`CREATE TABLE IF NOT EXISTS`, `DROP POLICY IF EXISTS` before
+   `CREATE POLICY`), and enable row level security on every new table.
+3. Open a PR. `.github/workflows/migrations-check.yml` applies every migration
+   to a fresh database, and the PR check fails if any migration has an error.
+4. After it merges, the deploy workflow applies only migrations the shared
+   database has not seen yet. Supabase records applied versions in
+   `supabase_migrations.schema_migrations`.
+
+### Testing locally
+
+With Docker running, from the repo root:
+
+```bash
+npx supabase db start
+npx supabase db reset --local --no-seed
+```
+
+This is the same check the PR runs.
+
+### If a migration fails
+
+- **On the PR:** the check is red and nothing reaches the shared database. Fix
+  the file and push again.
+- **On merge:** the deploy workflow stops at **Apply migrations**, so Edge
+  Functions are not deployed. Fix it in a new PR.
+- **To undo a migration that already ran:** add a new migration that reverses
+  it (for example, drop the column it added). There are no automatic down
+  migrations.
+
+### Baseline
+
+The four starting migrations (`20261012000001` to `20261012000004`) are exact
+copies of `api/src/database/migrations/001` to `004`, which were applied by
+hand before automation. They only use `IF NOT EXISTS` / `DROP ... IF EXISTS`
+statements, so the first automated run re-applies them without changing
+existing tables or data and records them as applied.
+
+The copies in `api/src/database/migrations/` are deprecated. They stay only for
+the Express API and its tests until Express is retired.
+`supabase/migrations/` is the source of truth for the shared database.
+
+### Never edit an applied migration
+
+Once a migration has run, change the schema with a new migration. Editing an
+old file does nothing on the shared database, because its version is already
+recorded as applied.
 
 ## Frontend deployment verification
 
