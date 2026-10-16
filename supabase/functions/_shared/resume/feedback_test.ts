@@ -63,6 +63,35 @@ Deno.test("drops non-string items", () => {
   deepStrictEqual(parseFeedback(raw).strengths, ["ok"]);
 });
 
+Deno.test("ignores extra fields and rejects a field of the wrong type", () => {
+  const extra = JSON.stringify({ ...valid, score: 9, notes: { a: 1 } });
+  deepStrictEqual(parseFeedback(extra), valid);
+  throws(
+    () => parseFeedback(JSON.stringify({ ...valid, strengths: "Good" })),
+    (err) => err instanceof HttpError && err.code === "AI_INVALID_RESPONSE",
+  );
+});
+
+Deno.test("rejects empty feedback", () => {
+  const empty = {
+    strengths: [],
+    weaknesses: [" "],
+    missing_skills: [],
+    suggestions: [1],
+  };
+  throws(
+    () => parseFeedback(JSON.stringify(empty)),
+    (err) => err instanceof HttpError && err.code === "AI_INVALID_RESPONSE",
+  );
+});
+
+Deno.test("caps extremely long output", () => {
+  const long = Array(50).fill("x".repeat(5_000));
+  const result = parseFeedback(JSON.stringify({ ...valid, suggestions: long }));
+  strictEqual(result.suggestions.length, 5);
+  strictEqual(result.suggestions.every((item) => item.length === 500), true);
+});
+
 Deno.test("valid provider reply returns feedback", async () => {
   const result = await generateFeedback(
     "resume text",
@@ -93,6 +122,20 @@ Deno.test("provider 500 is AI_UNAVAILABLE", async () => {
   await expectCode(
     generateFeedback("x", null, config, replyWith("oops", 500)),
     "AI_UNAVAILABLE",
+  );
+});
+
+Deno.test("rate-limited provider (429) is AI_UNAVAILABLE", async () => {
+  await expectCode(
+    generateFeedback("x", null, config, replyWith("slow down", 429)),
+    "AI_UNAVAILABLE",
+  );
+});
+
+Deno.test("empty provider content is AI_INVALID_RESPONSE", async () => {
+  await expectCode(
+    generateFeedback("x", null, config, replyWith("")),
+    "AI_INVALID_RESPONSE",
   );
 });
 
