@@ -90,3 +90,42 @@ jobs:
       - name: Tests
         if: steps.detect.outputs.found == 'true'
         run: deno test --allow-read --allow-env --allow-net supabase/functions
+
+  projects-rls:
+    name: Projects RLS regression
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Apply projects migration
+        run: |
+          DB_CONTAINER="$(docker ps --filter 'name=supabase_db_' --format '{{.Names}}' | head -n 1)"
+          test -n "$DB_CONTAINER"
+          cat api/src/database/migrations/001_create_projects.sql |
+            docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres
+
+      - name: Reload PostgREST schema
+        run: |
+          DB_CONTAINER="$(docker ps --filter 'name=supabase_db_' --format '{{.Names}}' | head -n 1)"
+          test -n "$DB_CONTAINER"
+          docker exec "$DB_CONTAINER" \
+            psql -U postgres -d postgres -c "NOTIFY pgrst, 'reload schema';"
+
+      - name: Run projects RLS regression
+        shell: bash
+        run: |
+          eval "$(supabase status -o env | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=')"
+          export API_URL ANON_KEY SERVICE_ROLE_KEY
+          deno test --allow-env --allow-net supabase/tests/projects_rls_test.ts

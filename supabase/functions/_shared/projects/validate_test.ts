@@ -76,7 +76,7 @@ Deno.test("project input is trimmed and skills are normalized", () => {
       "JavaScript",
       "My Skill",
     ],
-    project_urls: [" arbitrary text "],
+    project_urls: [" https://example.com/project "],
     user_id: "other",
     id: "ignored",
   };
@@ -90,7 +90,7 @@ Deno.test("project input is trimmed and skills are normalized", () => {
         "JavaScript",
         "My Skill",
       ],
-      project_urls: ["arbitrary text"],
+      project_urls: ["https://example.com/project"],
     },
   });
 });
@@ -153,4 +153,78 @@ Deno.test("blank and non-string array entries are rejected", () => {
       );
     }
   }
+});
+
+Deno.test("invalid project status is rejected", () => {
+  assertEquals(
+    validateUpdateProject({
+      status: "archived",
+    }),
+    {
+      valid: false,
+      field: "status",
+      message: 'Project status must be either "in_progress" or "completed".',
+    },
+  );
+});
+
+Deno.test("very long project descriptions are preserved", () => {
+  const description = "x".repeat(10000);
+
+  assertEquals(
+    validateCreateProject({
+      title: "Long Description",
+      description,
+      skills_demonstrated: ["TypeScript"],
+    }),
+    {
+      valid: true,
+      dto: {
+        title: "Long Description",
+        description,
+        skills_demonstrated: ["TypeScript"],
+      },
+    },
+  );
+});
+
+Deno.test("invalid project URLs are rejected", () => {
+  for (
+    const projectUrl of [
+      "not-a-url",
+      "example.com/project",
+      "ftp://example.com/project",
+    ]
+  ) {
+    assertEquals(
+      validateUpdateProject({
+        project_urls: [projectUrl],
+      }),
+      {
+        valid: false,
+        field: "project_urls",
+        message: "project_urls must contain valid HTTP or HTTPS URLs.",
+      },
+    );
+  }
+});
+
+Deno.test("valid HTTP and HTTPS project URLs are accepted", () => {
+  assertEquals(
+    validateUpdateProject({
+      project_urls: [
+        "https://github.com/example/project",
+        "http://localhost:3000/demo",
+      ],
+    }),
+    {
+      valid: true,
+      dto: {
+        project_urls: [
+          "https://github.com/example/project",
+          "http://localhost:3000/demo",
+        ],
+      },
+    },
+  );
 });

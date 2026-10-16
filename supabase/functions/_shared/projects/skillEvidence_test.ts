@@ -79,3 +79,23 @@ Deno.test("no completed projects produces no skill evidence", () => {
 
   assertEquals(getCompletedProjectSkills(projects), []);
 });
+
+Deno.test("deleting a completed project removes its skill evidence", () => {
+  const completedProject: Project = {
+    ...baseProject,
+    skills_demonstrated: ["TypeScript", "Node.js"],
+  };
+
+  const projectsBeforeDelete = [completedProject];
+
+  assertEquals(getCompletedProjectSkills(projectsBeforeDelete), [
+    { name: "TypeScript", key: "typescript" },
+    { name: "Node.js", key: "node.js" },
+  ]);
+
+  const projectsAfterDelete = projectsBeforeDelete.filter(
+    (project) => project.id !== completedProject.id,
+  );
+
+  assertEquals(getCompletedProjectSkills(projectsAfterDelete), []);
+});

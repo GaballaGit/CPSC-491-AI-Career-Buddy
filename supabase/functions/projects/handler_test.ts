@@ -440,3 +440,38 @@ Deno.test("DELETE requires authentication", async () => {
   );
   assertEquals(calls.delete.length, 0);
 });
+
+Deno.test("concurrent PATCH requests remain isolated", async () => {
+  const { handler, calls } = testContext();
+
+  const [firstResponse, secondResponse] = await Promise.all([
+    handler(
+      request(`/${projectId}`, "PATCH", {
+        title: "Concurrent Update A",
+      }),
+    ),
+    handler(
+      request(`/${projectId}`, "PATCH", {
+        title: "Concurrent Update B",
+      }),
+    ),
+  ]);
+
+  assertEquals(firstResponse.status, 200);
+  assertEquals(secondResponse.status, 200);
+
+  const firstBody = await firstResponse.json();
+  const secondBody = await secondResponse.json();
+
+  assertEquals(firstBody.data.title, "Concurrent Update A");
+  assertEquals(secondBody.data.title, "Concurrent Update B");
+
+  assertEquals(calls.update.length, 2);
+  assertEquals(
+    calls.update.map((call) => call[2]),
+    [
+      { title: "Concurrent Update A" },
+      { title: "Concurrent Update B" },
+    ],
+  );
+});

@@ -201,7 +201,27 @@ function validateProject(
       );
     }
 
-    dto.project_urls = input.project_urls.map((url) => url.trim());
+    const projectUrls = input.project_urls.map((url) => url.trim());
+
+    for (const projectUrl of projectUrls) {
+      try {
+        const parsed = new URL(projectUrl);
+
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+          return invalid(
+            "project_urls must contain valid HTTP or HTTPS URLs.",
+            "project_urls",
+          );
+        }
+      } catch {
+        return invalid(
+          "project_urls must contain valid HTTP or HTTPS URLs.",
+          "project_urls",
+        );
+      }
+    }
+
+    dto.project_urls = projectUrls;
   }
 
   if (input.status !== undefined) {
