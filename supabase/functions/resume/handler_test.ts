@@ -1,11 +1,12 @@
 import { deepStrictEqual, strictEqual } from "node:assert";
 
 import type { AuthContext } from "../_shared/auth.ts";
+import { HttpError } from "../_shared/http.ts";
 import type {
   ResumeSkills,
   ResumeSkillStore,
 } from "../_shared/resume/repository.ts";
-import { createResumeHandler } from "./handler.ts";
+import { createResumeHandler, type ResumeDeps } from "./handler.ts";
 
 const fixtures = new URL("../_shared/resume/fixtures/", import.meta.url);
 
@@ -414,4 +415,202 @@ Deno.test("feedback while signed out is 401", async () => {
   await res.body?.cancel();
   strictEqual(res.status, 401);
   strictEqual(feedbackCalls.length, 0);
+});
+
+// Error Paths - C40CS-36
+
+// Override Deps - Signed in as user-a, one dependency swapped
+function handlerWith(overrides: Partial<ResumeDeps>) {
+  return createResumeHandler({
+    authenticate: () =>
+      Promise.resolve({ userId: "user-a", db: null } as unknown as AuthContext),
+    store: () => ({
+      save: () => Promise.resolve(),
+      load: () => Promise.resolve(null),
+    }),
+    feedback: () =>
+      Promise.resolve({
+        strengths: [],
+        weaknesses: [],
+        missing_skills: [],
+        suggestions: [],
+      }),
+    ...overrides,
+  });
+}
+
+// Fixture Bytes - Read a file from the fixtures folder
+function fixture(name: string) {
+  return Deno.readFile(new URL(name, fixtures));
+}
+
+Deno.test("upload that is not multipart is rejected", async () => {
+  const { handler } = fakeDeps("user-a");
+  const res = await handler(
+    new Request("http://localhost/resume", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ file: "resume.pdf" }),
+    }),
+  );
+  const body = await res.json();
+  strictEqual(res.status, 400);
+  strictEqual(body.error.code, "INVALID_REQUEST");
+});
+
+Deno.test("file without an extension is rejected", async () => {
+  const { handler } = fakeDeps("user-a");
+  const res = await upload(
+    handler,
+    "resume",
+    await fixture("sample_resume.pdf"),
+  );
+  const body = await res.json();
+  strictEqual(res.status, 400);
+  strictEqual(body.error.code, "VALIDATION_ERROR");
+});
+
+Deno.test("corrupt PDF is rejected with a clear 422", async () => {
+  const { handler, rows } = fakeDeps("user-a");
+  const res = await upload(
+    handler,
+    "corrupt.pdf",
+    new TextEncoder().encode("this is not a pdf"),
+  );
+  const body = await res.json();
+  strictEqual(res.status, 422);
+  strictEqual(body.error.code, "UNSUPPORTED_FILE_TYPE");
+  strictEqual(rows.size, 0);
+});
+
+Deno.test("corrupt DOCX is rejected with a clear 422", async () => {
+  const { handler, rows } = fakeDeps("user-a");
+  const res = await upload(
+    handler,
+    "corrupt.docx",
+    new TextEncoder().encode("this is not a docx"),
+  );
+  const body = await res.json();
+  strictEqual(res.status, 422);
+  strictEqual(body.error.code, "UNSUPPORTED_FILE_TYPE");
+  strictEqual(rows.size, 0);
+});
+
+Deno.test("empty PDF is rejected with a clear 422", async () => {
+  const { handler } = fakeDeps("user-a");
+  const res = await upload(handler, "empty.pdf", new Uint8Array(0));
+  const body = await res.json();
+  strictEqual(res.status, 422);
+  strictEqual(body.error.code, "UNSUPPORTED_FILE_TYPE");
+});
+
+Deno.test("Word file renamed to .pdf is rejected with a clear 422", async () => {
+  const { handler } = fakeDeps("user-a");
+  const res = await upload(
+    handler,
+    "renamed.pdf",
+    await fixture("sample_resume.docx"),
+  );
+  const body = await res.json();
+  strictEqual(res.status, 422);
+  strictEqual(body.error.code, "UNSUPPORTED_FILE_TYPE");
+});
+
+Deno.test("scanned PDF with no text returns NO_TEXT_FOUND", async () => {
+  const { handler, rows } = fakeDeps("user-a");
+  const res = await upload(handler, "scanned_resume.pdf");
+  const body = await res.json();
+  strictEqual(res.status, 422);
+  strictEqual(body.error.code, "NO_TEXT_FOUND");
+  strictEqual(rows.size, 0);
+});
+
+Deno.test("storage write failure is a 500 without internal details", async () => {
+  const handler = handlerWith({
+    store: () => ({
+      save: () => Promise.reject(new Error("db connection secret-123 failed")),
+      load: () => Promise.resolve(null),
+    }),
+  });
+  const res = await upload(handler, "sample_resume.pdf");
+  const text = await res.text();
+  strictEqual(res.status, 500);
+  strictEqual(JSON.parse(text).error.code, "INTERNAL_SERVER_ERROR");
+  strictEqual(text.includes("secret-123"), false);
+});
+
+Deno.test("storage read failure is a 500 without internal details", async () => {
+  const handler = handlerWith({
+    store: () => ({
+      save: () => Promise.resolve(),
+      load: () => Promise.reject(new Error("db connection secret-123 failed")),
+    }),
+  });
+  const res = await getSkills(handler);
+  const text = await res.text();
+  strictEqual(res.status, 500);
+  strictEqual(text.includes("secret-123"), false);
+});
+
+Deno.test("feedback body that is not JSON is rejected", async () => {
+  const { handler, feedbackCalls } = fakeDeps("user-a");
+  const res = await handler(
+    new Request("http://localhost/resume/feedback", {
+      method: "POST",
+      body: "not json",
+    }),
+  );
+  const body = await res.json();
+  strictEqual(res.status, 400);
+  strictEqual(body.error.code, "VALIDATION_ERROR");
+  strictEqual(feedbackCalls.length, 0);
+});
+
+Deno.test("feedback text over 50,000 characters is rejected", async () => {
+  const { handler, feedbackCalls } = fakeDeps("user-a");
+  const res = await askFeedback(handler, { text: "a".repeat(50_001) });
+  const body = await res.json();
+  strictEqual(res.status, 400);
+  strictEqual(body.error.code, "VALIDATION_ERROR");
+  strictEqual(feedbackCalls.length, 0);
+});
+
+Deno.test("AI errors keep their status and code", async () => {
+  const handler = handlerWith({
+    feedback: () =>
+      Promise.reject(new HttpError(504, "AI_TIMEOUT", "AI took too long.")),
+  });
+  const res = await askFeedback(handler, { text: "Python developer" });
+  const body = await res.json();
+  strictEqual(res.status, 504);
+  strictEqual(body.error.code, "AI_TIMEOUT");
+});
+
+Deno.test("unexpected AI failure is a 500 without internal details", async () => {
+  const handler = handlerWith({
+    feedback: () =>
+      Promise.reject(new Error("provider key sk-secret rejected")),
+  });
+  const res = await askFeedback(handler, { text: "Python developer" });
+  const text = await res.text();
+  strictEqual(res.status, 500);
+  strictEqual(text.includes("sk-secret"), false);
+});
+
+Deno.test("representative fixtures upload cleanly", async () => {
+  const { handler } = fakeDeps("user-a");
+
+  const twoColumn = await (await upload(handler, "two_column_resume.pdf"))
+    .json();
+  strictEqual(
+    twoColumn.data.skills.some((s: { key: string }) => s.key === "react"),
+    true,
+  );
+
+  const long = await (await upload(handler, "long_resume.pdf")).json();
+  strictEqual(long.data.characters > 10_000, true);
+
+  const noSkills = await (await upload(handler, "no_skills_resume.docx"))
+    .json();
+  deepStrictEqual(noSkills.data.skills, []);
 });

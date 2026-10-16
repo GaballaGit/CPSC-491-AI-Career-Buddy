@@ -22,23 +22,36 @@ export async function extractResumeText(
   const ext = filename.toLowerCase().split(".").pop();
   let raw: string;
 
-  // PDF Branch - unpdf
-  if (ext === "pdf") {
-    const pdf = await getDocumentProxy(bytes);
-    const result = await extractText(pdf, { mergePages: true });
-    raw = result.text as string;
+  try {
+    // PDF Branch - unpdf
+    if (ext === "pdf") {
+      const pdf = await getDocumentProxy(bytes);
+      const result = await extractText(pdf, { mergePages: true });
+      raw = result.text as string;
 
-    // DOCX Branch - mammoth (Buffer, not arrayBuffer, in Deno)
-  } else if (ext === "docx") {
-    const result = await mammoth.extractRawText({ buffer: Buffer.from(bytes) });
-    raw = result.value;
+      // DOCX Branch - mammoth (Buffer, not arrayBuffer, in Deno)
+    } else if (ext === "docx") {
+      const result = await mammoth.extractRawText({
+        buffer: Buffer.from(bytes),
+      });
+      raw = result.value;
 
-    // Rejected - Unsupported extension
-  } else {
+      // Rejected - Unsupported extension
+    } else {
+      throw new HttpError(
+        422,
+        "UNSUPPORTED_FILE_TYPE",
+        `Unsupported file type: .${ext}`,
+      );
+    }
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+
+    // Unreadable - Damaged, empty, or mislabeled file
     throw new HttpError(
       422,
       "UNSUPPORTED_FILE_TYPE",
-      `Unsupported file type: .${ext}`,
+      "This file could not be read. It may be damaged or not a real PDF or Word file.",
     );
   }
 
