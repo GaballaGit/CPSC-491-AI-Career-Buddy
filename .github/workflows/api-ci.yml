@@ -129,3 +129,30 @@ jobs:
           eval "$(supabase status -o env | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=')"
           export API_URL ANON_KEY SERVICE_ROLE_KEY
           deno test --allow-env --allow-net supabase/tests/projects_rls_test.ts
+
+  # C40CS-69 (SOC 2 CC6.1): two-user RLS regression for career_profiles.
+  # `supabase start` applies supabase/migrations, so the table already exists.
+  career-profiles-rls:
+    name: Career Profiles RLS regression
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Run career_profiles RLS regression
+        shell: bash
+        run: |
+          eval "$(supabase status -o env | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=')"
+          export API_URL ANON_KEY SERVICE_ROLE_KEY
+          deno test --allow-env --allow-net supabase/tests/career_profiles_rls_test.ts
