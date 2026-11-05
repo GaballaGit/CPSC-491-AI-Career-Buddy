@@ -1,0 +1,103 @@
+name: Dependency Security
+
+on:
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend-audit:
+    name: Frontend dependency audit
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: site/career-buddy-site
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: site/career-buddy-site/package-lock.json
+
+      - name: Install dependencies from lockfile
+        run: npm ci
+
+      - name: Audit production dependencies
+        id: audit
+        shell: bash
+        run: |
+          set +e
+          npm audit --omit=dev --audit-level=high --json > frontend-audit.json
+          audit_exit=$?
+          echo "exit_code=$audit_exit" >> "$GITHUB_OUTPUT"
+          echo "npm audit exit code: $audit_exit"
+          exit 0
+
+      - name: Upload frontend audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dependency-audit-${{ github.sha }}
+          path: site/career-buddy-site/frontend-audit.json
+          if-no-files-found: error
+
+      - name: Enforce high severity threshold
+        if: steps.audit.outputs.exit_code != '0'
+        run: |
+          echo "Frontend dependency audit found vulnerabilities at or above the HIGH threshold."
+          exit 1
+
+  legacy-api-audit:
+    name: Legacy API dependency audit
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install dependencies from lockfile
+        run: npm ci
+
+      - name: Audit production dependencies
+        id: audit
+        shell: bash
+        run: |
+          set +e
+          npm audit --omit=dev --audit-level=high --json > api-audit.json
+          audit_exit=$?
+          echo "exit_code=$audit_exit" >> "$GITHUB_OUTPUT"
+          echo "npm audit exit code: $audit_exit"
+          exit 0
+
+      - name: Upload API audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-api-dependency-audit-${{ github.sha }}
+          path: api/api-audit.json
+          if-no-files-found: error
+
+      - name: Enforce high severity threshold
+        if: steps.audit.outputs.exit_code != '0'
+        run: |
+          echo "Legacy API dependency audit found vulnerabilities at or above the HIGH threshold."
+          exit 1
