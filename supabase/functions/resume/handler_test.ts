@@ -664,3 +664,84 @@ Deno.test("real PDF with an uppercase extension passes the signature check", asy
   await res.body?.cancel();
   strictEqual(res.status, 200);
 });
+
+// Size Precheck - C40CS-77
+
+const MB = 1024 * 1024;
+
+// Sized Upload - Buffered multipart body with a real Content-Length
+async function sizedUpload(
+  handler: (req: Request) => Promise<Response>,
+  name: string,
+  bytes: Uint8Array<ArrayBuffer>,
+) {
+  const form = new FormData();
+  form.append("file", new File([bytes], name));
+  const built = new Request("http://localhost/resume", {
+    method: "POST",
+    body: form,
+  });
+  const body = new Uint8Array(await built.arrayBuffer());
+  return handler(
+    new Request("http://localhost/resume", {
+      method: "POST",
+      body,
+      headers: {
+        "content-type": built.headers.get("content-type")!,
+        "content-length": String(body.length),
+      },
+    }),
+  );
+}
+
+// Padded PDF - Real resume plus trailing spaces to an exact size
+async function paddedPdf(size: number) {
+  const pdf = await fixture("sample_resume.pdf");
+  const bytes = new Uint8Array(size).fill(0x20);
+  bytes.set(pdf);
+  return bytes;
+}
+
+Deno.test("oversized Content-Length is rejected before the body is read", async () => {
+  const { handler, rows } = fakeDeps("user-a");
+  let bytesRead = 0;
+  const body = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (bytesRead >= 20 * MB) return controller.close();
+      bytesRead += 64 * 1024;
+      controller.enqueue(new Uint8Array(64 * 1024));
+    },
+  });
+
+  const res = await handler(
+    new Request("http://localhost/resume", {
+      method: "POST",
+      body,
+      headers: {
+        "content-type": "multipart/form-data; boundary=x",
+        "content-length": String(20 * MB),
+      },
+    }),
+  );
+  const json = await res.json();
+
+  strictEqual(res.status, 400);
+  strictEqual(json.error.message, "File is too large.");
+  strictEqual(bytesRead < MB, true);
+  strictEqual(rows.size, 0);
+});
+
+Deno.test("exactly 5 MB PDF with a real Content-Length still uploads", async () => {
+  const { handler } = fakeDeps("user-a");
+  const res = await sizedUpload(handler, "r.pdf", await paddedPdf(5 * MB));
+  await res.body?.cancel();
+  strictEqual(res.status, 200);
+});
+
+Deno.test("5 MB + 1 byte PDF with a real Content-Length is rejected", async () => {
+  const { handler } = fakeDeps("user-a");
+  const res = await sizedUpload(handler, "r.pdf", await paddedPdf(5 * MB + 1));
+  const json = await res.json();
+  strictEqual(res.status, 400);
+  strictEqual(json.error.message, "File is too large.");
+});

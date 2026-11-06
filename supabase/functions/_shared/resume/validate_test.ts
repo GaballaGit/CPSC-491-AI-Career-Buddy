@@ -1,7 +1,11 @@
 import { throws } from "node:assert";
 
 import { HttpError } from "../http.ts";
-import { checkResumeSignature } from "./validate.ts";
+import {
+  checkResumeRequestSize,
+  checkResumeSignature,
+  RESUME_MAX_REQUEST_BYTES,
+} from "./validate.ts";
 
 const fixtures = new URL("./fixtures/", import.meta.url);
 const bytes = (text: string) => new TextEncoder().encode(text);
@@ -33,4 +37,23 @@ Deno.test("DOCX signature needs the full ZIP header", () => {
 
 Deno.test("unknown extensions never pass the signature check", () => {
   throws(() => checkResumeSignature(bytes("%PDF"), "r.txt"), HttpError);
+});
+
+// Declared Size - POST with an optional Content-Length
+const declared = (length: number | null) =>
+  new Request("http://localhost/resume", {
+    method: "POST",
+    headers: length === null ? {} : { "content-length": String(length) },
+  });
+
+Deno.test("size precheck allows up to the request limit", () => {
+  checkResumeRequestSize(declared(RESUME_MAX_REQUEST_BYTES));
+  checkResumeRequestSize(declared(null));
+});
+
+Deno.test("size precheck rejects one byte over the request limit", () => {
+  throws(
+    () => checkResumeRequestSize(declared(RESUME_MAX_REQUEST_BYTES + 1)),
+    HttpError,
+  );
 });
