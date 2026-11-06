@@ -12,6 +12,7 @@ declare module "express-serve-static-core" {
 }
 
 // here we grab the bearer token
+// we get it from the http header by the way
 function bearerToken(header: string | undefined): string | null {
   if (!header) return null;
 
