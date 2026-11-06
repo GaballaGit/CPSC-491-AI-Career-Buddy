@@ -5,6 +5,25 @@ import { HttpError } from "../http.ts";
 export const RESUME_ALLOWED_EXTENSIONS = ["pdf", "docx"];
 export const RESUME_MAX_BYTES = 5 * 1024 * 1024;
 
+// Request Limit - File limit plus room for multipart headers
+export const RESUME_MAX_REQUEST_BYTES = RESUME_MAX_BYTES + 64 * 1024;
+
+// Too Large - Same error for request and file size
+function fileTooLarge(): HttpError {
+  return new HttpError(400, "VALIDATION_ERROR", "File is too large.", [
+    {
+      field: "file",
+      message: `Maximum size is ${RESUME_MAX_BYTES / 1024 / 1024} MB.`,
+    },
+  ]);
+}
+
+// Size Precheck - Declared Content-Length, before reading the body
+export function checkResumeRequestSize(req: Request) {
+  const declared = Number(req.headers.get("content-length"));
+  if (declared > RESUME_MAX_REQUEST_BYTES) throw fileTooLarge();
+}
+
 // Upload Check - Presence, extension, size
 export function validateResumeFile(file: FormDataEntryValue | null): File {
   if (!(file instanceof File)) {
@@ -26,14 +45,7 @@ export function validateResumeFile(file: FormDataEntryValue | null): File {
     ]);
   }
 
-  if (file.size > RESUME_MAX_BYTES) {
-    throw new HttpError(400, "VALIDATION_ERROR", "File is too large.", [
-      {
-        field: "file",
-        message: `Maximum size is ${RESUME_MAX_BYTES / 1024 / 1024} MB.`,
-      },
-    ]);
-  }
+  if (file.size > RESUME_MAX_BYTES) throw fileTooLarge();
 
   return file;
 }

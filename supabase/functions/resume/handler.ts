@@ -17,6 +17,7 @@ import {
 } from "../_shared/resume/repository.ts";
 import { extractSkills } from "../_shared/resume/skills.ts";
 import {
+  checkResumeRequestSize,
   checkResumeSignature,
   validateResumeFile,
 } from "../_shared/resume/validate.ts";
@@ -83,6 +84,7 @@ async function upload(
   deps: ResumeDeps,
 ): Promise<Response> {
   const { userId, store } = await requireUser(req, deps);
+  checkResumeRequestSize(req);
 
   let form: FormData;
 
