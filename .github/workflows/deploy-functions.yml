@@ -5,11 +5,6 @@ name: Deploy Edge Functions
 on:
   push:
     branches: ["main"]
-    paths:
-      - "supabase/**"
-      - "api/src/utils/skills.ts"
-      - ".github/workflows/deploy-functions.yml"
-  workflow_dispatch:
 
 # One deploy at a time; a newer merge waits for the running one
 concurrency:
