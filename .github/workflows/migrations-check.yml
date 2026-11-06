@@ -4,9 +4,6 @@ name: Migrations Check
 on:
   pull_request:
     branches: ["main"]
-    paths:
-      - "supabase/migrations/**"
-      - ".github/workflows/migrations-check.yml"
 
 jobs:
   apply:
@@ -27,7 +24,6 @@ jobs:
       - name: Apply all migrations
         run: supabase db reset --local --no-seed
 
-        
       # Replay - Every migration must run a second time without errors (C40CS-52)
       - name: Re-run all migrations
         run: |

@@ -3,9 +3,6 @@ name: Frontend CI
 on:
   pull_request:
     branches: ["main"]
-    paths:
-      - "site/career-buddy-site/**"
-      - ".github/workflows/frontend-ci.yml"
 
 jobs:
   frontend:

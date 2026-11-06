@@ -3,10 +3,6 @@ name: API CI
 on:
   pull_request:
     branches: ["main"]
-    paths:
-      - "api/**"
-      - "supabase/**"
-      - ".github/workflows/api-ci.yml"
 
 permissions:
   contents: read
