@@ -614,3 +614,53 @@ Deno.test("representative fixtures upload cleanly", async () => {
     .json();
   deepStrictEqual(noSkills.data.skills, []);
 });
+
+// File Signatures - C40CS-76
+
+const SIGNATURE_MISMATCH = "File content does not match";
+
+Deno.test("content that doesn't match the extension is rejected before parsing", async () => {
+  const cases: Array<[string, Uint8Array<ArrayBuffer>]> = [
+    ["renamed.pdf", await fixture("sample_resume.docx")],
+    ["renamed.docx", await fixture("sample_resume.pdf")],
+    ["page.pdf", new TextEncoder().encode("<html><script></script></html>")],
+    ["notes.docx", new TextEncoder().encode("plain text")],
+    ["program.pdf", new TextEncoder().encode("MZ fake executable")],
+    ["empty.docx", new Uint8Array(0)],
+  ];
+
+  for (const [name, bytes] of cases) {
+    const { handler, rows } = fakeDeps("user-a");
+    const res = await upload(handler, name, bytes);
+    const body = await res.json();
+    strictEqual(res.status, 422, name);
+    strictEqual(body.error.code, "UNSUPPORTED_FILE_TYPE", name);
+    strictEqual(body.error.message.startsWith(SIGNATURE_MISMATCH), true, name);
+    strictEqual(rows.size, 0, name);
+  }
+});
+
+Deno.test("valid signature with a damaged body is still rejected by the parser", async () => {
+  const { handler, rows } = fakeDeps("user-a");
+  const res = await upload(
+    handler,
+    "header-only.pdf",
+    new TextEncoder().encode("%PDF-1.7\n"),
+  );
+  const body = await res.json();
+  strictEqual(res.status, 422);
+  strictEqual(body.error.code, "UNSUPPORTED_FILE_TYPE");
+  strictEqual(body.error.message.startsWith(SIGNATURE_MISMATCH), false);
+  strictEqual(rows.size, 0);
+});
+
+Deno.test("real PDF with an uppercase extension passes the signature check", async () => {
+  const { handler } = fakeDeps("user-a");
+  const res = await upload(
+    handler,
+    "RESUME.PDF",
+    await fixture("sample_resume.pdf"),
+  );
+  await res.body?.cancel();
+  strictEqual(res.status, 200);
+});

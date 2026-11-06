@@ -37,3 +37,25 @@ export function validateResumeFile(file: FormDataEntryValue | null): File {
 
   return file;
 }
+
+// Signatures - First bytes of each allowed type
+const RESUME_SIGNATURES: Record<string, number[]> = {
+  pdf: [0x25, 0x50, 0x44, 0x46], // %PDF
+  docx: [0x50, 0x4b, 0x03, 0x04], // PK.. (ZIP)
+};
+
+// Signature Check - Content matches extension, before parsing
+export function checkResumeSignature(bytes: Uint8Array, filename: string) {
+  const ext = filename.toLowerCase().split(".").pop() ?? "";
+  const signature = RESUME_SIGNATURES[ext] ?? [];
+  const matches = signature.length > 0 &&
+    signature.every((byte, i) => bytes[i] === byte);
+
+  if (!matches) {
+    throw new HttpError(
+      422,
+      "UNSUPPORTED_FILE_TYPE",
+      `File content does not match its .${ext} extension.`,
+    );
+  }
+}
