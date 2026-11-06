@@ -16,7 +16,10 @@ import {
   supabaseResumeSkillStore,
 } from "../_shared/resume/repository.ts";
 import { extractSkills } from "../_shared/resume/skills.ts";
-import { validateResumeFile } from "../_shared/resume/validate.ts";
+import {
+  checkResumeSignature,
+  validateResumeFile,
+} from "../_shared/resume/validate.ts";
 
 export interface ResumeDeps {
   authenticate(req: Request): Promise<AuthContext | null>;
@@ -95,6 +98,7 @@ async function upload(
 
   const file = validateResumeFile(form.get("file"));
   const bytes = new Uint8Array(await file.arrayBuffer());
+  checkResumeSignature(bytes, file.name);
   const text = await extractResumeText(bytes, file.name);
   const skills = extractSkills(text);
 
