@@ -1,10 +1,11 @@
-import { throws } from "node:assert";
+import { strictEqual, throws } from "node:assert";
 
 import { HttpError } from "../http.ts";
 import {
   checkResumeRequestSize,
   checkResumeSignature,
   RESUME_MAX_REQUEST_BYTES,
+  validateResumeFile,
 } from "./validate.ts";
 
 const fixtures = new URL("./fixtures/", import.meta.url);
@@ -55,5 +56,22 @@ Deno.test("size precheck rejects one byte over the request limit", () => {
   throws(
     () => checkResumeRequestSize(declared(RESUME_MAX_REQUEST_BYTES + 1)),
     HttpError,
+  );
+});
+
+// Filename Limit - C40CS-81
+const pdfNamed = (name: string) => new File(["%PDF"], name);
+
+Deno.test("filename of exactly 255 characters is accepted", () => {
+  const name = "a".repeat(251) + ".pdf";
+  strictEqual(validateResumeFile(pdfNamed(name)).name, name);
+});
+
+Deno.test("filename over 255 characters is rejected", () => {
+  throws(
+    () => validateResumeFile(pdfNamed("a".repeat(252) + ".pdf")),
+    (err: unknown) =>
+      err instanceof HttpError && err.status === 400 &&
+      err.code === "VALIDATION_ERROR" && err.details?.[0].field === "file",
   );
 });
