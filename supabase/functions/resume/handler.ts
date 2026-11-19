@@ -50,6 +50,7 @@ const defaultDeps: ResumeDeps = {
 };
 
 const MAX_FEEDBACK_TEXT = 50_000;
+const MAX_TARGET_ROLE = 100;
 
 // Public health response used by post-deployment smoke checks.
 // Keep this intentionally small and free of secrets or environment details.
@@ -158,6 +159,15 @@ async function feedback(req: Request, deps: ResumeDeps): Promise<Response> {
   const givenRole = typeof body?.targetRole === "string"
     ? body.targetRole.trim()
     : "";
+  // Target Role Limit - C40CS-80
+  if (givenRole.length > MAX_TARGET_ROLE) {
+    throw new HttpError(400, "VALIDATION_ERROR", "Target role is too long.", [
+      {
+        field: "targetRole",
+        message: `Use ${MAX_TARGET_ROLE} characters or fewer.`,
+      },
+    ]);
+  }
   const targetRole = givenRole ||
     (await deps.targetRole?.(auth).catch(() => null)) || null;
 
