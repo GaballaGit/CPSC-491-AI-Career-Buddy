@@ -266,3 +266,160 @@ Deno.test("OPTIONS returns CORS headers", async () => {
   await res.body?.cancel();
   strictEqual(res.headers.get("Access-Control-Allow-Origin"), "*");
 });
+
+// Hostile and malformed input (C40CS-50) - every case is a 4xx with the
+// standard error envelope, never a 500, and nothing bad is saved
+
+async function expectValidationError(
+  handler: (req: Request) => Promise<Response>,
+  body: unknown,
+  fields: string[],
+) {
+  const res = await handler(post(body, "user-a"));
+  const payload = await res.json();
+  strictEqual(res.status, 400);
+  strictEqual(payload.success, false);
+  strictEqual(payload.error.code, "VALIDATION_ERROR");
+  deepStrictEqual(
+    payload.error.details.map((detail: { field: string }) => detail.field),
+    fields,
+  );
+}
+
+Deno.test("POST rejects wrong-type fields with per-field 400s", async () => {
+  const { handler, rows } = setup();
+
+  await expectValidationError(handler, {
+    target_career: { name: "Engineer" },
+    experience_level: ["beginner"],
+    skills: "js",
+    learning_preferences: "videos",
+    weekly_availability_hours: "10",
+  }, [
+    "target_career",
+    "experience_level",
+    "skills",
+    "learning_preferences",
+    "weekly_availability_hours",
+  ]);
+
+  await expectValidationError(handler, {
+    ...validProfile,
+    skills: ["js", 5, null, { name: "React" }],
+  }, ["skills"]);
+
+  for (const hours of [10.5, -1, 1e300, true, null]) {
+    await expectValidationError(handler, {
+      ...validProfile,
+      weekly_availability_hours: hours,
+    }, ["weekly_availability_hours"]);
+  }
+
+  strictEqual(rows.size, 0);
+});
+
+Deno.test("POST rejects whitespace-only text", async () => {
+  const { handler, rows } = setup();
+  await expectValidationError(handler, {
+    ...validProfile,
+    target_career: "   ",
+    skills: ["  ", "\t"],
+  }, ["target_career", "skills"]);
+  strictEqual(rows.size, 0);
+});
+
+Deno.test("POST rejects prototype names as enum values", async () => {
+  const { handler, rows } = setup();
+  await expectValidationError(handler, {
+    ...validProfile,
+    experience_level: "constructor",
+    learning_preferences: ["toString", "__proto__"],
+  }, ["experience_level", "learning_preferences"]);
+  strictEqual(rows.size, 0);
+});
+
+Deno.test("POST rejects deeply nested JSON without a 500", async () => {
+  const { handler, rows } = setup();
+  const depth = 5000;
+  const nested = '{"a":'.repeat(depth) + '"x"' + "}".repeat(depth);
+  const body = JSON.stringify({ ...validProfile, target_career: "PLACEHOLDER" })
+    .replace('"PLACEHOLDER"', nested);
+
+  const res = await handler(post(body, "user-a"));
+  const payload = await res.json();
+  strictEqual(res.status, 400);
+  strictEqual(payload.error.details[0].field, "target_career");
+  strictEqual(rows.size, 0);
+});
+
+Deno.test("POST rejects an oversized skills array", async () => {
+  const { handler, rows } = setup();
+  await expectValidationError(handler, {
+    ...validProfile,
+    skills: Array.from({ length: 10_000 }, (_, i) => `skill-${i}`),
+  }, ["skills"]);
+  strictEqual(rows.size, 0);
+});
+
+Deno.test("POST ignores unknown and server-owned fields", async () => {
+  const { handler, rows } = setup();
+  const body = JSON.stringify(validProfile).replace(
+    /}$/,
+    ',"__proto__":{"is_admin":true},"is_admin":true,"id":"forged-id",' +
+      '"user_id":"user-b","created_at":"1999-01-01"}',
+  );
+
+  const res = await handler(post(body, "user-a"));
+  const payload = await res.json();
+  strictEqual(res.status, 201);
+
+  const saved = rows.get("user-a")!;
+  deepStrictEqual(Object.keys(saved).sort(), [
+    "created_at",
+    "experience_level",
+    "id",
+    "learning_preferences",
+    "skills",
+    "target_career",
+    "updated_at",
+    "user_id",
+    "weekly_availability_hours",
+  ]);
+  strictEqual(saved.id, "profile-1");
+  strictEqual(saved.user_id, "user-a");
+  strictEqual(saved.created_at, "created");
+  strictEqual(payload.data.is_admin, undefined);
+  strictEqual(({} as Record<string, unknown>).is_admin, undefined);
+  strictEqual(rows.has("user-b"), false);
+});
+
+Deno.test("POST stores script/HTML and unicode as plain text", async () => {
+  const { handler, rows } = setup();
+  const res = await handler(
+    post({
+      ...validProfile,
+      target_career: "<script>alert(1)</script>",
+      skills: ["<img src=x onerror=alert(1)>", "🚀 Rocketry", "日本語"],
+    }, "user-a"),
+  );
+  const payload = await res.json();
+
+  // React renders these as text, so they are stored exactly as typed
+  strictEqual(res.status, 201);
+  strictEqual(payload.data.target_career, "<script>alert(1)</script>");
+  deepStrictEqual(rows.get("user-a")?.skills, [
+    "<img src=x onerror=alert(1)>",
+    "🚀 Rocketry",
+    "日本語",
+  ]);
+});
+
+Deno.test("POST rejects null characters instead of failing in Postgres", async () => {
+  const { handler, rows } = setup();
+  await expectValidationError(handler, {
+    ...validProfile,
+    target_career: "Dev\u0000ops",
+    skills: ["React", "SQL\u0000"],
+  }, ["target_career", "skills"]);
+  strictEqual(rows.size, 0);
+});

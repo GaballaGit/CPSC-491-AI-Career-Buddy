@@ -48,6 +48,12 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+// NUL Check - Postgres text columns cannot store \u0000, so the save would
+// fail as a 500 instead of a 400 (C40CS-50)
+function hasNullCharacter(value: string): boolean {
+  return value.includes("\u0000");
+}
+
 function validationError(message: string, details?: FieldError[]) {
   return new HttpError(400, "VALIDATION_ERROR", message, details);
 }
@@ -73,6 +79,11 @@ export function validateCareerProfile(body: unknown): CareerProfileInput {
       message:
         `target_career must be ${TARGET_CAREER_MAX_LENGTH} characters or fewer.`,
     });
+  } else if (hasNullCharacter(targetCareer)) {
+    errors.push({
+      field: "target_career",
+      message: "target_career must not contain null characters.",
+    });
   }
 
   const experienceLevel = input.experience_level;
@@ -94,6 +105,11 @@ export function validateCareerProfile(body: unknown): CareerProfileInput {
     errors.push({
       field: "skills",
       message: "skills must be a non-empty array of non-empty strings.",
+    });
+  } else if (input.skills.some(hasNullCharacter)) {
+    errors.push({
+      field: "skills",
+      message: "Skills must not contain null characters.",
     });
   } else {
     skills = normalizeSkills(input.skills).map((skill) => skill.name);
