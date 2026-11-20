@@ -475,3 +475,38 @@ Deno.test("concurrent PATCH requests remain isolated", async () => {
     ],
   );
 });
+
+Deno.test("GET /projects/health returns 200 without authentication", async () => {
+  const { handler } = testContext({
+    authenticated: false,
+  });
+
+  const response = await handler(
+    request("/health", "GET"),
+  );
+
+  const body = await response.json();
+
+  assertEquals(response.status, 200);
+  assertEquals(body.data, {
+    status: "ok",
+    service: "projects",
+  });
+});
+
+Deno.test("GET /projects/health exposes only public health information", async () => {
+  const { handler } = testContext({
+    authenticated: false,
+  });
+
+  const response = await handler(
+    request("/health", "GET"),
+  );
+
+  const body = await response.json();
+
+  assertEquals(
+    Object.keys(body.data).sort(),
+    ["service", "status"],
+  );
+});

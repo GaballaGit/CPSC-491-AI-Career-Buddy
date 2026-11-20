@@ -423,3 +423,30 @@ Deno.test("POST rejects null characters instead of failing in Postgres", async (
   }, ["target_career", "skills"]);
   strictEqual(rows.size, 0);
 });
+
+Deno.test("GET /profile/health returns 200 without authentication", async () => {
+  const { handler } = setup();
+  const res = await handler(
+    new Request("http://localhost/profile/health"),
+  );
+  const body = await res.json();
+
+  strictEqual(res.status, 200);
+  deepStrictEqual(body.data, {
+    status: "ok",
+    service: "profile",
+  });
+});
+
+Deno.test("GET /profile/health exposes only public health information", async () => {
+  const { handler } = setup();
+  const res = await handler(
+    new Request("http://localhost/profile/health"),
+  );
+  const body = await res.json();
+
+  deepStrictEqual(
+    Object.keys(body.data).sort(),
+    ["service", "status"],
+  );
+});

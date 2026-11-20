@@ -129,6 +129,13 @@ async function getJob(
   return ok(jobs[0], 200, { matching: { status } });
 }
 
+function health(): Response {
+  return ok({
+    status: "ok",
+    service: "jobs",
+  });
+}
+
 export function createJobsHandler(deps: JobsDeps = defaultDeps) {
   return async (req: Request): Promise<Response> => {
     if (req.method === "OPTIONS") {
@@ -146,6 +153,15 @@ export function createJobsHandler(deps: JobsDeps = defaultDeps) {
 
       const url = new URL(req.url);
       const path = routePath(url);
+
+      if (
+        req.method === "GET" &&
+        path.length === 1 &&
+        path[0] === "health"
+      ) {
+        return health();
+      }
+
       const auth = await deps.authenticate(req);
 
       if (path.length === 0) return await listJobs(req, auth, deps);

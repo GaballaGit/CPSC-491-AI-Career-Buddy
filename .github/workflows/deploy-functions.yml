@@ -55,53 +55,75 @@ jobs:
       - name: Deploy functions
         run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF" --use-api
 
-      - name: Verify Resume function health
+      - name: Verify deployed Edge Functions
         shell: bash
         run: |
-          HEALTH_URL="https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/resume/health"
+          FUNCTIONS=("resume" "jobs" "profile" "projects")
+          FAILED_FUNCTIONS=()
 
-          echo "Checking deployed Resume function health..."
+          for function_name in "${FUNCTIONS[@]}"; do
+            HEALTH_URL="https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/${function_name}/health"
 
-          for attempt in 1 2 3 4 5; do
-            echo "Health check attempt ${attempt}/5"
+            echo "Checking deployed ${function_name} function health..."
 
-            RESPONSE_FILE="$(mktemp)"
+            check_passed=false
 
-            if curl \
-              --fail \
-              --silent \
-              --show-error \
-              --location \
-              --max-time 15 \
-              --output "$RESPONSE_FILE" \
-              "$HEALTH_URL"; then
+            for attempt in 1 2 3 4 5; do
+              echo "${function_name} health check attempt ${attempt}/5"
 
-              echo "Health endpoint responded successfully."
+              RESPONSE_FILE="$(mktemp)"
 
-              if grep -q '"status":"ok"' "$RESPONSE_FILE" && \
-                 grep -q '"service":"resume"' "$RESPONSE_FILE"; then
-                echo "Resume function health verification passed."
-                rm -f "$RESPONSE_FILE"
-                exit 0
+              if curl \
+                --fail \
+                --silent \
+                --show-error \
+                --location \
+                --max-time 15 \
+                --output "$RESPONSE_FILE" \
+                "$HEALTH_URL"; then
+
+                if grep -q '"status":"ok"' "$RESPONSE_FILE" && \
+                   grep -q "\"service\":\"${function_name}\"" "$RESPONSE_FILE"; then
+                  echo "${function_name} function health verification passed."
+                  check_passed=true
+                  rm -f "$RESPONSE_FILE"
+                  break
+                fi
+
+                echo "${function_name} health endpoint returned an unexpected response."
+                cat "$RESPONSE_FILE"
+              else
+                echo "${function_name} health endpoint was not reachable."
               fi
 
-              echo "Health endpoint returned an unexpected response."
-              cat "$RESPONSE_FILE"
-            else
-              echo "Health endpoint was not reachable."
-            fi
+              rm -f "$RESPONSE_FILE"
 
-            rm -f "$RESPONSE_FILE"
+              if [ "$attempt" -lt 5 ]; then
+                echo "Retrying ${function_name} in 5 seconds..."
+                sleep 5
+              fi
+            done
 
-            if [ "$attempt" -lt 5 ]; then
-              echo "Retrying in 5 seconds..."
-              sleep 5
+            if [ "$check_passed" != "true" ]; then
+              echo "::error::Deployed ${function_name} function failed health verification."
+              FAILED_FUNCTIONS+=("$function_name")
             fi
           done
 
-          echo "::error::Deployed Resume function failed health verification."
-          exit 1
+          if [ "${#FAILED_FUNCTIONS[@]}" -gt 0 ]; then
+            {
+              echo "## Edge Function smoke checks failed"
+              echo ""
+              echo "Failed functions:"
+              for function_name in "${FAILED_FUNCTIONS[@]}"; do
+                echo "- ${function_name}"
+              done
+            } >> "$GITHUB_STEP_SUMMARY"
 
+            exit 1
+          fi
+
+          echo "All deployed Edge Function health checks passed."
       - name: List deployed functions
         run: supabase functions list --project-ref "$SUPABASE_PROJECT_REF"
 
@@ -113,5 +135,5 @@ jobs:
             echo "- Version: \`${{ steps.version.outputs.value }}\`"
             echo "- Commit: \`${GITHUB_SHA}\`"
             echo "- Database migrations: applied (see the List migrations step)"
-            echo "- Resume health check: passed"
+            echo "- Edge Function health checks: resume, jobs, profile, projects passed"
           } >> "$GITHUB_STEP_SUMMARY"

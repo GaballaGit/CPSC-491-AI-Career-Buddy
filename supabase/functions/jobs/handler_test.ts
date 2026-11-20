@@ -141,3 +141,30 @@ Deno.test("OPTIONS returns CORS headers", async () => {
   await res.body?.cancel();
   strictEqual(res.headers.get("Access-Control-Allow-Origin"), "*");
 });
+
+Deno.test("GET /jobs/health returns 200 without authentication", async () => {
+  const handler = fakeDeps(undefined);
+  const res = await handler(
+    new Request("http://localhost/jobs/health"),
+  );
+  const body = await res.json();
+
+  strictEqual(res.status, 200);
+  deepStrictEqual(body.data, {
+    status: "ok",
+    service: "jobs",
+  });
+});
+
+Deno.test("GET /jobs/health exposes only public health information", async () => {
+  const handler = fakeDeps(undefined);
+  const res = await handler(
+    new Request("http://localhost/jobs/health"),
+  );
+  const body = await res.json();
+
+  deepStrictEqual(
+    Object.keys(body.data).sort(),
+    ["service", "status"],
+  );
+});
