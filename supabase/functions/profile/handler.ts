@@ -52,6 +52,13 @@ async function saveProfile(req: Request, deps: ProfileDeps) {
   return ok(await store.upsertForUser(userId, input), 201);
 }
 
+function health(): Response {
+  return ok({
+    status: "ok",
+    service: "profile",
+  });
+}
+
 export function createProfileHandler(deps: ProfileDeps = defaultDeps) {
   return async (req: Request): Promise<Response> => {
     if (req.method === "OPTIONS") {
@@ -60,6 +67,15 @@ export function createProfileHandler(deps: ProfileDeps = defaultDeps) {
 
     try {
       const path = routePath(new URL(req.url));
+
+      if (
+        req.method === "GET" &&
+        path.length === 1 &&
+        path[0] === "health"
+      ) {
+        return health();
+      }
+
       if (path.length > 0) {
         throw new HttpError(
           404,

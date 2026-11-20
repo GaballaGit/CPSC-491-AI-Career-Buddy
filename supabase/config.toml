@@ -427,18 +427,18 @@ entrypoint = "./functions/resume/index.ts"
 
 [functions.jobs]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/jobs/deno.json"
 entrypoint = "./functions/jobs/index.ts"
 
 [functions.profile]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/profile/deno.json"
 entrypoint = "./functions/profile/index.ts"
 
 [functions.projects]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/projects/deno.json"
 entrypoint = "./functions/projects/index.ts"

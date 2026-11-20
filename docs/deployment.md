@@ -15,9 +15,9 @@ run by hand from the **Actions** tab with **Run workflow**.
 4. Runs `supabase functions deploy --use-api`, which bundles every function
    under `supabase/functions/` (folders starting with `_` are not deployed on
    their own) without Docker.
-5. Runs a post-deployment health check against the deployed Resume Edge Function.
+5. Runs post-deployment health checks against the deployed Resume, Jobs, Profile, and Projects Edge Functions.
 6. Lists the deployed functions.
-7. Writes the build version and health-check result to the run summary:
+7. Writes the build version and Edge Function health-check results to the run summary:
    `build-<run number>-<short commit>`, e.g. `build-12-a81fc20`.
 
 Migrations run before functions are deployed, so a function never goes live
@@ -26,47 +26,74 @@ health check fails the workflow run, and nothing after the failed step runs.
 
 ## Post-deployment health verification
 
-C40CS-26 adds an automated smoke check after the Supabase Edge Functions deployment completes.
+After all Supabase Edge Functions are deployed, the workflow performs read-only
+smoke checks against every deployed application function.
 
-The Resume Edge Function exposes:
+The following public health endpoints are checked:
 
+| Function | Endpoint | Verification |
+| -------- | -------- | ------------ |
+| Resume | `GET /resume/health` | Confirms the deployed Resume function is reachable and identifies itself as `resume`. |
+| Jobs | `GET /jobs/health` | Confirms the deployed Jobs function is reachable and identifies itself as `jobs`. |
+| Profile | `GET /profile/health` | Confirms the deployed Profile function is reachable and identifies itself as `profile`. |
+| Projects | `GET /projects/health` | Confirms the deployed Projects function is reachable and identifies itself as `projects`. |
+
+The deployed endpoints follow this form:
+
+```text
+https://<project-ref>.supabase.co/functions/v1/<function>/health
 ```
-GET /resume/health
-```
 
-The deployed endpoint follows this form:
-
-```
-https://<project-ref>.supabase.co/functions/v1/resume/health
-```
-
-A successful response contains only public health information:
+Each successful endpoint returns only public health information:
 
 ```json
 {
   "data": {
     "status": "ok",
-    "service": "resume"
+    "service": "<function-name>"
   }
 }
 ```
 
-The health endpoint does not require user authentication and does not expose credentials, environment variables, access tokens, or internal configuration.
+The health endpoints do not require user authentication and do not expose
+credentials, environment variables, access tokens, user information, or
+internal configuration.
+
+### What each check verifies
+
+Each smoke check verifies that:
+
+- the deployed Edge Function is reachable over HTTPS;
+- the request returns a successful HTTP response;
+- the response contains `"status":"ok"`;
+- the response contains the expected function name in `"service"`;
+- no authenticated user credentials are required.
+
+These checks are intentionally read-only. They verify deployment availability
+without creating, updating, or deleting application data.
 
 ### Retry behavior
 
-The deployment workflow attempts the health request up to five times.
+Each Edge Function health request is attempted up to five times.
 
 Each request:
 
-- must return a successful HTTP response,
-- has a 15-second timeout,
-- must contain `"status":"ok"`,
-- must contain `"service":"resume"`.
+- has a 15-second timeout;
+- must return a successful HTTP response;
+- must contain `"status":"ok"`;
+- must contain the expected `"service"` value.
 
-If a request fails, the workflow waits five seconds before trying again.
+If a request fails, the workflow waits five seconds before trying that function
+again.
 
-If all attempts fail, the workflow exits with an error and the GitHub Actions deployment run fails.
+The workflow continues checking the remaining functions so that all failures
+can be identified in the same run.
+
+If any function fails all retry attempts:
+
+- the workflow logs a GitHub Actions error naming that function;
+- the failed function is listed in the workflow summary;
+- the deployment workflow exits with a failure status.
 
 ## One-time setup
 

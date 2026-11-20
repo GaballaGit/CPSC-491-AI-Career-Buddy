@@ -162,6 +162,13 @@ async function deleteProject(
   });
 }
 
+function health(): Response {
+  return ok({
+    status: "ok",
+    service: "projects",
+  });
+}
+
 export function createProjectsHandler(
   deps: ProjectsDeps = defaultDeps,
 ) {
@@ -174,6 +181,14 @@ export function createProjectsHandler(
 
     try {
       const path = routePath(new URL(req.url));
+
+      if (
+        req.method === "GET" &&
+        path.length === 1 &&
+        path[0] === "health"
+      ) {
+        return health();
+      }
 
       if (path.length === 0) {
         if (req.method === "GET") {
