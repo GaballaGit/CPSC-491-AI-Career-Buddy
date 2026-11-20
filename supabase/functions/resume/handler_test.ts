@@ -400,6 +400,32 @@ Deno.test("feedback uses a target role from the request first", async () => {
   strictEqual(feedbackCalls[0].targetRole, "Data Analyst");
 });
 
+// Target Role Limit - C40CS-80
+Deno.test("feedback targetRole of exactly 100 characters is accepted", async () => {
+  const { handler, feedbackCalls } = fakeDeps("user-a");
+  const role = "a".repeat(100);
+  const res = await askFeedback(handler, {
+    text: "Python developer",
+    targetRole: role,
+  });
+  await res.body?.cancel();
+  strictEqual(res.status, 200);
+  strictEqual(feedbackCalls[0].targetRole, role);
+});
+
+Deno.test("feedback targetRole over 100 characters is rejected before the AI call", async () => {
+  const { handler, feedbackCalls } = fakeDeps("user-a");
+  const res = await askFeedback(handler, {
+    text: "Python developer",
+    targetRole: "a".repeat(101),
+  });
+  const body = await res.json();
+  strictEqual(res.status, 400);
+  strictEqual(body.error.code, "VALIDATION_ERROR");
+  strictEqual(body.error.details[0].field, "targetRole");
+  strictEqual(feedbackCalls.length, 0);
+});
+
 Deno.test("feedback without text is rejected", async () => {
   const { handler, feedbackCalls } = fakeDeps("user-a");
   const res = await askFeedback(handler, { text: "   " });
