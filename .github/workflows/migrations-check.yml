@@ -32,3 +32,12 @@ jobs:
             psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
               -v ON_ERROR_STOP=1 -q -f "$file"
           done
+
+      - name: Load demo jobs twice and verify seed
+        run: |
+          DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          for pass in 1 2; do
+            echo "Loading demo jobs (pass $pass)"
+            psql "$DB_URL" -v ON_ERROR_STOP=1 -q -f supabase/seed.sql
+            psql "$DB_URL" -v ON_ERROR_STOP=1 -q -f supabase/tests/demo_jobs_seed_test.sql
+          done
