@@ -4,6 +4,7 @@ import { HttpError } from "../http.ts";
 // Limits - Same as api/src/constants
 export const RESUME_ALLOWED_EXTENSIONS = ["pdf", "docx"];
 export const RESUME_MAX_BYTES = 5 * 1024 * 1024;
+export const RESUME_MAX_FILENAME = 255;
 
 // Request Limit - File limit plus room for multipart headers
 export const RESUME_MAX_REQUEST_BYTES = RESUME_MAX_BYTES + 64 * 1024;
@@ -29,6 +30,17 @@ export function validateResumeFile(file: FormDataEntryValue | null): File {
   if (!(file instanceof File)) {
     throw new HttpError(400, "VALIDATION_ERROR", "No file was uploaded.", [
       { field: "file", message: "A resume file is required." },
+    ]);
+  }
+
+  // Filename Limit - C40CS-81
+  if (file.name.length > RESUME_MAX_FILENAME) {
+    throw new HttpError(400, "VALIDATION_ERROR", "File name is too long.", [
+      {
+        field: "file",
+        message:
+          `Use a file name of ${RESUME_MAX_FILENAME} characters or fewer.`,
+      },
     ]);
   }
 
